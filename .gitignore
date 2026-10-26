@@ -1,0 +1,7 @@
+node_modules/
+dist/
+output/recordings/
+output/renders/
+*.mp4
+*.webm
+.DS_Store
