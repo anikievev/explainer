@@ -1,0 +1,22 @@
+{
+  "name": "explainers",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "typecheck": "tsc --noEmit",
+    "record": "node src/scripts/record.ts",
+    "record:4k": "node src/scripts/record.ts --4k"
+  },
+  "dependencies": {
+    "three": "^0.170.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "@types/three": "^0.170.0",
+    "playwright-core": "^1.64.1",
+    "typescript": "^5.9.3",
+    "vite": "^6.4.5"
+  }
+}
