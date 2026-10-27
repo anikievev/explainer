@@ -5,3 +5,5 @@ output/renders/
 *.mp4
 *.webm
 .DS_Store
+# Local secrets written by `elevenlabs onboard`
+/.env.local
