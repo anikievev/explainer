@@ -7,6 +7,7 @@
  *   node src/scripts/record.ts --4k               # 3840×2160
  *   node src/scripts/record.ts --from 210 --to 240 --workers 4
  *   node src/scripts/record.ts --stills 2,60,150  # PNG stills only
+ *   node src/scripts/record.ts --export-mascot    # mascot model → src/assets/models/mascot.glb
  *
  * Requires ffmpeg on PATH and Google Chrome installed.
  */
@@ -31,6 +32,7 @@ const { values: args } = parseArgs({
     to: { type: 'string' },
     stills: { type: 'string' },
     crf: { type: 'string', default: '16' },
+    'export-mascot': { type: 'boolean', default: false },
   },
 });
 
@@ -85,6 +87,15 @@ async function main() {
       const { width, height, fps, duration, frameCount } = window.__explainer!;
       return { width, height, fps, duration, frameCount };
     })) as Explainer;
+
+    if (args['export-mascot']) {
+      const glb = await first.evaluate(() => window.__explainer!.exportMascotGlb());
+      const dir = join(ROOT, 'src/assets/models');
+      await mkdir(dir, { recursive: true });
+      await writeFile(join(dir, 'mascot.glb'), Buffer.from(glb, 'base64'));
+      console.log(join(dir, 'mascot.glb'));
+      return;
+    }
 
     if (args.stills) {
       const stillsDir = join(OUT_DIR, 'stills');

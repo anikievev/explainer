@@ -3,6 +3,8 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+import { Mascot, poseIdle } from './components/Mascot.ts';
 import { Hud } from './components/Hud.ts';
 import { getVideoSettings, type ResolutionName } from './config/video-settings.ts';
 import { CdnScene } from './scenes/cdn/CdnScene.ts';
@@ -45,6 +47,7 @@ function renderAt(t: number) {
   cdn.drawOverlay(hud, t);
   hud.end();
   renderer.render(hud.scene, hud.camera);
+  cdn.presenter.render(renderer);
 }
 
 declare global {
@@ -56,6 +59,7 @@ declare global {
       duration: number;
       frameCount: number;
       renderFrame(frame: number): string;
+      exportMascotGlb(): Promise<string>;
     };
   }
 }
@@ -70,6 +74,16 @@ if (renderMode) {
     renderFrame(frame: number) {
       renderAt(frame / settings.fps);
       return renderer.domElement.toDataURL('image/png');
+    },
+    async exportMascotGlb() {
+      const mascot = new Mascot();
+      mascot.apply(poseIdle(0), 1);
+      const glb = (await new GLTFExporter().parseAsync(mascot.group, { binary: true })) as ArrayBuffer;
+      mascot.dispose();
+      let binary = '';
+      const bytes = new Uint8Array(glb);
+      for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+      return btoa(binary);
     },
   };
 } else {

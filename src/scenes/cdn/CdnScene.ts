@@ -1,10 +1,12 @@
 import * as THREE from 'three';
 import { CameraRig, type CameraShot } from '../../components/CameraRig.ts';
 import type { Hud } from '../../components/Hud.ts';
+import { MascotLayer } from '../../components/MascotLayer.ts';
 import { clamp, fadeWindow } from '../../components/Timeline.ts';
 import { COLORS, CSS } from '../../config/theme.ts';
 import { DiagramStage } from './DiagramStage.ts';
 import { MapStage } from './MapStage.ts';
+import { updatePresenter } from './presenter.ts';
 import { drawEndCard, drawLatencyComparePanel, drawLimitsCards, drawRecap, drawRoundTripPanel } from './overlays.ts';
 import { DURATION, SECTIONS, cueAt } from './script.ts';
 
@@ -118,6 +120,8 @@ export class CdnScene {
   private readonly rig: CameraRig;
   private readonly mapStage = new MapStage();
   private readonly diagramStage = new DiagramStage();
+  /** Channel mascot drawn in screen space on top of everything. */
+  readonly presenter = new MascotLayer();
 
   constructor(aspect: number, private readonly showCaptions = false) {
     this.camera = new THREE.PerspectiveCamera(35, aspect, 0.1, 200);
@@ -144,6 +148,7 @@ export class CdnScene {
     } else {
       this.diagramStage.update(t);
     }
+    updatePresenter(this.presenter, t);
   }
 
   drawOverlay(hud: Hud, t: number) {
@@ -177,5 +182,6 @@ export class CdnScene {
   dispose() {
     this.mapStage.dispose();
     this.diagramStage.dispose();
+    this.presenter.dispose();
   }
 }

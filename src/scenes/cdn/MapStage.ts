@@ -10,6 +10,7 @@ import {
   createUser,
   type NodeMesh,
 } from '../../components/NodeMesh.ts';
+import { Mascot, poseRun } from '../../components/Mascot.ts';
 import { PacketPool } from '../../components/PacketPool.ts';
 import { fadeWindow, progress, ramp } from '../../components/Timeline.ts';
 import { WorldMap, geo } from '../../components/WorldMap.ts';
@@ -59,6 +60,8 @@ export class MapStage {
   private readonly dnsEurope = createDnsServer();
   private readonly dnsAsia = createDnsServer();
   private readonly files: NodeMesh[] = [];
+  /** The mascot plays the data packet crossing the Atlantic. */
+  private readonly mascot = new Mascot();
 
   private readonly toOrigin = {} as Record<UserKey, ArcPath>;
   private readonly toEdge = {} as Record<UserKey, ArcPath>;
@@ -78,7 +81,7 @@ export class MapStage {
   private readonly nodes: NodeMesh[] = [];
 
   constructor() {
-    this.group.add(this.map.group, this.pool.group);
+    this.group.add(this.map.group, this.pool.group, this.mascot.group);
 
     this.place(this.origin, lifted(ORIGIN_VIRGINIA).setY(0.04));
     for (const key of USER_KEYS) this.users[key] = this.place(createUser(), geo(...USERS[key].lonLat));
@@ -243,9 +246,7 @@ export class MapStage {
     p.stream(this.toEdge.berlin.curve, t, 12.3, 15.6, 0.7, 0.35, out);
     p.stream(this.toEdge.berlin.curve, t, 12.65, 15.9, 0.7, 0.35, { ...back, reverse: true });
 
-    // Slow-motion single packet (speed of light in fiber).
-    p.travel(berlinOrigin, t, 32.5, 6, { ...out, size: packetSize * 1.4, trail: 0.15 });
-    p.roundTrip(berlinOrigin, t, 40, 6.5, { ...out, size: packetSize * 1.3 }, { ...back, size: packetSize * 1.3 });
+    this.updateMascot(t, s);
 
     PAGE_TRIPS.forEach((trip, i) => {
       const dur = trip.end - trip.start;
@@ -296,6 +297,35 @@ export class MapStage {
       });
     }
     p.end();
+  }
+
+  /** Mascot runs Berlin → Virginia (slow motion), then makes a round trip. */
+  private updateMascot(t: number, s: number) {
+    const m = this.mascot;
+    const curve = this.toOrigin.berlin.curve;
+    let k = -1;
+    let appear = 0;
+    let returning = false;
+    if (t >= 32.3 && t < 38.8) {
+      k = progress(t, 32.5, 38.5);
+      appear = Math.min(progress(t, 32.3, 32.7), 1 - progress(t, 38.4, 38.8));
+    } else if (t >= 39.8 && t < 46.9) {
+      const out = progress(t, 40, 43.25);
+      returning = t >= 43.25;
+      k = returning ? 1 - progress(t, 43.25, 46.5) : out;
+      appear = Math.min(progress(t, 39.8, 40.2), 1 - progress(t, 46.5, 46.9));
+    }
+    m.group.visible = appear > 0.001;
+    if (!m.group.visible) return;
+    m.group.position.copy(curve.getPointAt(Math.min(Math.max(k, 0), 1)));
+    m.group.scale.setScalar(0.5 * s * Math.max(0.001, appear));
+    // Face the direction of travel, turned three-quarters toward the camera.
+    const ahead = curve.getTangentAt(Math.min(Math.max(k, 0.001), 0.999));
+    if (returning) ahead.negate();
+    const travelYaw = Math.atan2(ahead.x, ahead.z);
+    m.group.rotation.set(0, travelYaw * 0.55, 0);
+    m.shadowVisible = false;
+    m.apply(poseRun(t, 9), t);
   }
 
   /** Labels and map-specific overlays. Called after the 3D update. */
@@ -400,6 +430,7 @@ export class MapStage {
 
   dispose() {
     this.map.dispose();
+    this.mascot.dispose();
     this.pool.dispose();
     for (const n of this.nodes) n.dispose();
     for (const f of this.files) f.dispose();
