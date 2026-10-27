@@ -8,6 +8,8 @@
  *   node src/scripts/record.ts --from 210 --to 240 --workers 4
  *   node src/scripts/record.ts --stills 2,60,150  # PNG stills only
  *   node src/scripts/record.ts --export-mascot    # mascot model → src/assets/models/mascot.glb
+ *   node src/scripts/record.ts --thumbnail        # 1280×720 YouTube thumbnail (rendered at 4K)
+ *   node src/scripts/record.ts --banner           # 2560×1440 YouTube channel banner (rendered at 4K)
  *
  * Requires ffmpeg on PATH and Google Chrome installed.
  */
@@ -33,10 +35,12 @@ const { values: args } = parseArgs({
     stills: { type: 'string' },
     crf: { type: 'string', default: '16' },
     'export-mascot': { type: 'boolean', default: false },
+    thumbnail: { type: 'boolean', default: false },
+    banner: { type: 'boolean', default: false },
   },
 });
 
-const res = args['4k'] ? '4k' : '1080p';
+const res = args['4k'] || args.thumbnail || args.banner ? '4k' : '1080p';
 
 interface Explainer {
   width: number;
@@ -65,7 +69,7 @@ async function main() {
   await server.listen();
   const address = server.httpServer!.address();
   const port = typeof address === 'object' && address ? address.port : 5173;
-  const url = `http://localhost:${port}/?render=1&res=${res}`;
+  const url = `http://localhost:${port}/?render=1&res=${res}${args.thumbnail ? '&thumbnail=1' : ''}${args.banner ? '&banner=1' : ''}`;
 
   const browser = await chromium.launch({
     channel: 'chrome',
@@ -94,6 +98,26 @@ async function main() {
       await mkdir(dir, { recursive: true });
       await writeFile(join(dir, 'mascot.glb'), Buffer.from(glb, 'base64'));
       console.log(join(dir, 'mascot.glb'));
+      return;
+    }
+
+    if (args.banner) {
+      const source = join(OUT_DIR, 'channel-banner-4k.png');
+      await writeFile(source, await grabFrame(first, 0));
+      const png = join(OUT_DIR, 'channel-banner.png');
+      await ffmpeg(['-i', source, '-vf', 'scale=2560:1440:flags=lanczos', png]).done;
+      console.log(png);
+      return;
+    }
+
+    if (args.thumbnail) {
+      const source = join(OUT_DIR, `${VIDEO_SLUG}-thumbnail-4k.png`);
+      await writeFile(source, await grabFrame(first, 0));
+      const png = join(OUT_DIR, `${VIDEO_SLUG}-thumbnail.png`);
+      const jpg = join(OUT_DIR, `${VIDEO_SLUG}-thumbnail.jpg`);
+      await ffmpeg(['-i', source, '-vf', 'scale=1280:720:flags=lanczos', png]).done;
+      await ffmpeg(['-i', source, '-vf', 'scale=1280:720:flags=lanczos', '-q:v', '2', jpg]).done;
+      console.log(`${png}\n${jpg}`);
       return;
     }
 

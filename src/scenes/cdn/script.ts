@@ -8,6 +8,8 @@ export interface Cue {
   start: number;
   end: number;
   text: string;
+  /** Spoken form for the voiceover, when the caption text reads badly aloud. */
+  say?: string;
 }
 
 export interface Section {
@@ -31,15 +33,15 @@ export const SECTIONS: Section[] = [
 export const CUES: Cue[] = [
   // 0:00–0:20 — Hook
   { start: 0.3, end: 5.5, text: 'Why does a website load fast, even when its server is on the other side of the world?' },
-  { start: 5.5, end: 11, text: "Say you're in Berlin. The site you open is hosted in Virginia, about 6,700 kilometers away." },
-  { start: 11, end: 15.5, text: 'Yet the page appears almost instantly. The trick is called a CDN.' },
+  { start: 5.5, end: 11, text: "You're in Berlin. The site is hosted in Virginia, about 6,700 kilometers away." },
+  { start: 11, end: 15.5, text: 'Yet the page appears almost instantly. The trick: a CDN.' },
   { start: 15.5, end: 20, text: "A Content Delivery Network. Let's see how it works." },
 
   // 0:20–1:30 — The problem
-  { start: 20, end: 26, text: 'First, the problem. Without a CDN, every request goes all the way to one server: the origin.' },
+  { start: 20, end: 26, text: 'Without a CDN, every request goes all the way to one server: the origin.' },
   { start: 26, end: 32, text: 'The origin is where your website actually lives: your files, your app, your database.' },
   { start: 32, end: 39, text: 'Data travels through fiber-optic cables at roughly 200,000 kilometers per second.' },
-  { start: 39, end: 48, text: 'Fast, but not instant. A round trip from Berlin to Virginia takes about 70 milliseconds in theory, and often closer to 100 in practice.' },
+  { start: 39, end: 48, text: 'A round trip from Berlin to Virginia: about 70 milliseconds in theory, often closer to 100 in practice.' },
   { start: 48, end: 53, text: 'And opening a page takes several round trips.' },
   { start: 53, end: 60, text: 'One to open a connection. One more to set up encryption. Then one for the HTML itself.' },
   { start: 60, end: 66, text: 'Then more for the styles, scripts and images that the HTML points to.' },
@@ -69,41 +71,41 @@ export const CUES: Cue[] = [
 
   // 3:30–5:30 — Hit, miss, refresh
   { start: 210, end: 216, text: 'So what happens when a request reaches the edge? There are two possibilities.' },
-  { start: 216, end: 223, text: 'Case one: a cache hit. The user in Berlin asks for logo.png.' },
+  { start: 216, end: 223, text: 'Case one: a cache hit. The user in Berlin asks for logo.png.', say: 'Case one: a cache hit. The user in Berlin asks for logo dot P N G.' },
   { start: 223, end: 230, text: "Frankfurt already has a copy, and sends it right back. The origin isn't involved at all." },
   { start: 230, end: 237, text: "That's the fast path, and a CDN tries to make it as common as possible." },
-  { start: 237, end: 244, text: 'Case two: a cache miss. A user in Tokyo asks for a new file, hero.jpg.' },
+  { start: 237, end: 244, text: 'Case two: a cache miss. A user in Tokyo asks for a new file, hero.jpg.', say: 'Case two: a cache miss. A user in Tokyo asks for a new file, hero dot J P G.' },
   { start: 244, end: 251, text: "The Tokyo edge doesn't have it yet, so it forwards the request to the origin." },
   { start: 251, end: 259, text: 'The origin sends the file back. The edge delivers it to the user, and keeps a copy.' },
-  { start: 259, end: 266, text: 'The next user in Tokyo who asks for hero.jpg gets a cache hit.' },
+  { start: 259, end: 266, text: 'The next user in Tokyo who asks for hero.jpg gets a cache hit.', say: 'The next user in Tokyo who asks for hero dot J P G gets a cache hit.' },
   { start: 266, end: 272, text: 'A miss costs one long trip. After that, everyone nearby benefits.' },
   { start: 272, end: 279, text: "But what if you change the file? Copies can't live forever." },
   { start: 279, end: 287, text: 'The origin sets a lifetime with a header: Cache-Control, max-age. For example, one hour.' },
   { start: 287, end: 294, text: 'While that timer runs, the edge serves its copy without asking.' },
   { start: 294, end: 302, text: 'When it expires, the edge checks back with the origin: has this file changed?' },
-  { start: 302, end: 309, text: 'If not, the origin replies with a tiny 304 Not Modified, and the timer starts again.' },
+  { start: 302, end: 309, text: 'If not, the origin replies with a tiny 304 Not Modified, and the timer starts again.', say: 'If not, the origin replies with a tiny three-oh-four, Not Modified, and the timer starts again.' },
   { start: 309, end: 316, text: 'If it has changed, the edge downloads the new version.' },
   { start: 316, end: 323, text: 'Need an update right now? You can purge the cache, and the edges drop their old copies.' },
-  { start: 323, end: 330, text: 'Many teams also put a version in the file name, like app.v2.js, so new files never clash with old ones.' },
+  { start: 323, end: 330, text: 'Many teams also version file names, like app.v2.js, so new files never clash with old ones.', say: 'Many teams also version file names, like app dot v2 dot J S, so new files never clash with old ones.' },
 
   // 5:30–6:30 — When a CDN doesn't help
   { start: 330, end: 336, text: "A CDN is powerful, but it's not magic. Here's when it doesn't help much." },
   { start: 336, end: 343, text: 'Personal data. Your shopping cart or account page is different for every user.' },
   { start: 343, end: 350, text: 'The origin marks it private, or no-store, so the edge passes the request through to the origin.' },
   { start: 350, end: 356, text: 'The edge can keep its connection to the origin warm, but the origin still does the work.' },
-  { start: 356, end: 362, text: 'Rarely requested files. If almost nobody asks for something, the cache is usually cold.' },
+  { start: 356, end: 362, text: 'Rarely requested files. If almost nobody asks for them, the cache stays cold.' },
   { start: 362, end: 369, text: 'Users near the origin. Someone in Washington is already close to Virginia, so the gain is small.' },
-  { start: 369, end: 376, text: "And a slow backend. If every response needs two seconds of database work, the CDN can't speed that part up." },
+  { start: 369, end: 376, text: "And a slow backend. If each response needs two seconds of database work, a CDN can't fix that." },
   { start: 376, end: 383, text: "A CDN shortens the distance. It doesn't fix slow code." },
   { start: 383, end: 390, text: 'Uncacheable, rarely used, already nearby, or slow at the source: look elsewhere.' },
 
   // 6:30–7:00 — Recap
   { start: 390, end: 395, text: "So, let's recap." },
-  { start: 395, end: 401, text: 'A CDN puts edge servers close to your users, and DNS or Anycast sends each user to a nearby one.' },
-  { start: 401, end: 407, text: 'A cache hit is served from the edge. A miss goes to the origin once, then gets cached.' },
+  { start: 395, end: 401, text: 'Edge servers sit near your users. DNS or Anycast picks the nearest.' },
+  { start: 401, end: 407, text: 'A hit is served from the edge. A miss fetches from the origin once.' },
   { start: 407, end: 412, text: 'Lifetimes, revalidation and purging keep the copies fresh.' },
-  { start: 412, end: 416, text: 'Next up: load balancers, and how one site spreads traffic across many servers.' },
-  { start: 416, end: 420, text: "What's in your Cache-Control headers? Tell me in the comments." },
+  { start: 412, end: 416, text: 'Next up: how load balancers spread traffic.' },
+  { start: 416, end: 420, text: "What's in your Cache-Control headers? Tell me below." },
 ];
 
 export function cueAt(t: number): Cue | undefined {

@@ -7,9 +7,13 @@
     "dev": "vite",
     "typecheck": "tsc --noEmit",
     "record": "node src/scripts/record.ts",
-    "record:4k": "node src/scripts/record.ts --4k"
+    "record:4k": "node src/scripts/record.ts --4k",
+    "voiceover": "node --env-file=.env.local src/scripts/voiceover.ts",
+    "shorts": "node src/scripts/shorts.ts",
+    "release": "npm run record && npm run voiceover && npm run shorts"
   },
   "dependencies": {
+    "@elevenlabs/elevenlabs-js": "^2.74.0",
     "three": "^0.170.0"
   },
   "devDependencies": {

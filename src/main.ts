@@ -8,6 +8,8 @@ import { Mascot, poseIdle } from './components/Mascot.ts';
 import { Hud } from './components/Hud.ts';
 import { getVideoSettings, type ResolutionName } from './config/video-settings.ts';
 import { CdnScene } from './scenes/cdn/CdnScene.ts';
+import { CdnThumbnail } from './scenes/cdn/Thumbnail.ts';
+import { ChannelBanner } from './scenes/channel/ChannelBanner.ts';
 
 /**
  * Modes (query string):
@@ -15,6 +17,8 @@ import { CdnScene } from './scenes/cdn/CdnScene.ts';
  *   ?render=1          frame-exact rendering driven by src/scripts/record.ts
  *   ?res=4k            3840×2160 instead of 1920×1080
  *   ?captions=1        burn narration captions in (preview only)
+ *   ?thumbnail=1       the static YouTube thumbnail instead of the video
+ *   ?banner=1          the YouTube channel banner
  */
 const params = new URLSearchParams(location.search);
 const renderMode = params.has('render');
@@ -29,7 +33,12 @@ renderer.autoClear = false;
 document.body.appendChild(renderer.domElement);
 if (!renderMode) document.body.classList.add('preview');
 
-const cdn = new CdnScene(settings.width / settings.height, params.has('captions'));
+const aspect = settings.width / settings.height;
+const cdn = params.has('banner')
+  ? new ChannelBanner(aspect)
+  : params.has('thumbnail')
+    ? new CdnThumbnail(aspect)
+    : new CdnScene(aspect, params.has('captions'));
 const hud = new Hud(settings.width, settings.height, cdn.camera);
 
 const composer = new EffectComposer(renderer);
