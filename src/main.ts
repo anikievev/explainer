@@ -10,11 +10,31 @@ import { getVideoSettings, type ResolutionName } from './config/video-settings.t
 import { CdnScene } from './scenes/cdn/CdnScene.ts';
 import { CdnThumbnail } from './scenes/cdn/Thumbnail.ts';
 import { ChannelBanner } from './scenes/channel/ChannelBanner.ts';
+import { DEFAULT_EPISODE } from './scenes/episodes.ts';
+
+/** What every renderable scene (video, thumbnail, banner) provides. */
+interface Stage {
+  readonly scene: THREE.Scene;
+  readonly camera: THREE.PerspectiveCamera;
+  readonly duration: number;
+  readonly presenter: { render(renderer: THREE.WebGLRenderer): void };
+  update(t: number): void;
+  drawOverlay(hud: Hud, t: number): void;
+}
+
+/** Scene classes per episode id (ids match src/scenes/episodes.ts). */
+const SCENES: Record<string, { video(aspect: number, captions: boolean): Stage; thumbnail(aspect: number): Stage }> = {
+  cdn: {
+    video: (aspect, captions) => new CdnScene(aspect, captions),
+    thumbnail: (aspect) => new CdnThumbnail(aspect),
+  },
+};
 
 /**
  * Modes (query string):
  *   default            real-time preview, loops; `?t=95` starts at 95 s
  *   ?render=1          frame-exact rendering driven by src/scripts/record.ts
+ *   ?episode=cdn       which episode (default: the latest)
  *   ?res=4k            3840×2160 instead of 1920×1080
  *   ?captions=1        burn narration captions in (preview only)
  *   ?thumbnail=1       the static YouTube thumbnail instead of the video
@@ -34,29 +54,31 @@ document.body.appendChild(renderer.domElement);
 if (!renderMode) document.body.classList.add('preview');
 
 const aspect = settings.width / settings.height;
-const cdn = params.has('banner')
+const episodeScenes = SCENES[params.get('episode') ?? DEFAULT_EPISODE];
+if (!episodeScenes) throw new Error(`Unknown episode "${params.get('episode')}"`);
+const stage: Stage = params.has('banner')
   ? new ChannelBanner(aspect)
   : params.has('thumbnail')
-    ? new CdnThumbnail(aspect)
-    : new CdnScene(aspect, params.has('captions'));
-const hud = new Hud(settings.width, settings.height, cdn.camera);
+    ? episodeScenes.thumbnail(aspect)
+    : episodeScenes.video(aspect, params.has('captions'));
+const hud = new Hud(settings.width, settings.height, stage.camera);
 
 const composer = new EffectComposer(renderer);
 composer.setPixelRatio(1);
 composer.setSize(settings.width, settings.height);
-composer.addPass(new RenderPass(cdn.scene, cdn.camera));
+composer.addPass(new RenderPass(stage.scene, stage.camera));
 composer.addPass(new UnrealBloomPass(new THREE.Vector2(settings.width, settings.height), 0.55, 0.45, 0.72));
 composer.addPass(new OutputPass());
 
 function renderAt(t: number) {
-  cdn.update(t);
+  stage.update(t);
   renderer.clear();
   composer.render();
   hud.begin();
-  cdn.drawOverlay(hud, t);
+  stage.drawOverlay(hud, t);
   hud.end();
   renderer.render(hud.scene, hud.camera);
-  cdn.presenter.render(renderer);
+  stage.presenter.render(renderer);
 }
 
 declare global {
@@ -78,8 +100,8 @@ await document.fonts.ready;
 if (renderMode) {
   window.__explainer = {
     ...settings,
-    duration: cdn.duration,
-    frameCount: Math.round(cdn.duration * settings.fps),
+    duration: stage.duration,
+    frameCount: Math.round(stage.duration * settings.fps),
     renderFrame(frame: number) {
       renderAt(frame / settings.fps);
       return renderer.domElement.toDataURL('image/png');
@@ -99,7 +121,7 @@ if (renderMode) {
   const offset = Number(params.get('t') ?? 0);
   const startedAt = performance.now();
   const loop = () => {
-    const t = (offset + (performance.now() - startedAt) / 1000) % cdn.duration;
+    const t = (offset + (performance.now() - startedAt) / 1000) % stage.duration;
     renderAt(t);
     requestAnimationFrame(loop);
   };

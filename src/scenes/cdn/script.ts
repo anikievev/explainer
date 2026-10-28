@@ -4,20 +4,8 @@
  * Target pace: ~2.5 words/second.
  */
 
-export interface Cue {
-  start: number;
-  end: number;
-  text: string;
-  /** Spoken form for the voiceover, when the caption text reads badly aloud. */
-  say?: string;
-}
-
-export interface Section {
-  start: number;
-  end: number;
-  index: string;
-  title: string;
-}
+import type { Cue, Section } from '../../components/Script.ts';
+import { findCue, findSection, toSrt as cuesToSrt } from '../../components/Script.ts';
 
 export const DURATION = 420;
 
@@ -108,20 +96,6 @@ export const CUES: Cue[] = [
   { start: 416, end: 420, text: "What's in your Cache-Control headers? Tell me below." },
 ];
 
-export function cueAt(t: number): Cue | undefined {
-  return CUES.find((c) => t >= c.start && t < c.end);
-}
-
-export function sectionAt(t: number): Section {
-  return SECTIONS.find((s) => t >= s.start && t < s.end) ?? SECTIONS[SECTIONS.length - 1];
-}
-
-const srtTime = (s: number) => {
-  const ms = Math.round(s * 1000);
-  const pad = (n: number, w = 2) => String(n).padStart(w, '0');
-  return `${pad(Math.floor(ms / 3600000))}:${pad(Math.floor(ms / 60000) % 60)}:${pad(Math.floor(ms / 1000) % 60)},${pad(ms % 1000, 3)}`;
-};
-
-export function toSrt(cues: Cue[] = CUES): string {
-  return cues.map((c, i) => `${i + 1}\n${srtTime(c.start)} --> ${srtTime(c.end)}\n${c.text}\n`).join('\n');
-}
+export const cueAt = (t: number) => findCue(CUES, t);
+export const sectionAt = (t: number) => findSection(SECTIONS, t);
+export const toSrt = () => cuesToSrt(CUES);

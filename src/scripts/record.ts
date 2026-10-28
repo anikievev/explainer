@@ -3,7 +3,8 @@
  * and pipes PNGs into ffmpeg. Deterministic, so frames can be split across
  * parallel workers and re-rendered identically.
  *
- *   node src/scripts/record.ts                    # full 1080p video
+ *   node src/scripts/record.ts                    # full 1080p video of the latest episode
+ *   node src/scripts/record.ts --episode cdn      # a specific episode (see src/scenes/episodes.ts)
  *   node src/scripts/record.ts --4k               # 3840×2160
  *   node src/scripts/record.ts --from 210 --to 240 --workers 4
  *   node src/scripts/record.ts --stills 2,60,150  # PNG stills only
@@ -20,9 +21,9 @@ import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { chromium, type Page } from 'playwright-core';
 import { createServer } from 'vite';
-import { toSrt } from '../scenes/cdn/script.ts';
+import { toSrt } from '../components/Script.ts';
+import { getEpisode } from '../scenes/episodes.ts';
 
-const VIDEO_SLUG = 'how-a-cdn-works';
 const ROOT = resolve(import.meta.dirname, '../..');
 const OUT_DIR = join(ROOT, 'output/renders');
 
@@ -37,8 +38,12 @@ const { values: args } = parseArgs({
     'export-mascot': { type: 'boolean', default: false },
     thumbnail: { type: 'boolean', default: false },
     banner: { type: 'boolean', default: false },
+    episode: { type: 'string' },
   },
 });
+
+const episode = getEpisode(args.episode);
+const VIDEO_SLUG = episode.slug;
 
 const res = args['4k'] || args.thumbnail || args.banner ? '4k' : '1080p';
 
@@ -69,7 +74,7 @@ async function main() {
   await server.listen();
   const address = server.httpServer!.address();
   const port = typeof address === 'object' && address ? address.port : 5173;
-  const url = `http://localhost:${port}/?render=1&res=${res}${args.thumbnail ? '&thumbnail=1' : ''}${args.banner ? '&banner=1' : ''}`;
+  const url = `http://localhost:${port}/?render=1&res=${res}&episode=${episode.id}${args.thumbnail ? '&thumbnail=1' : ''}${args.banner ? '&banner=1' : ''}`;
 
   const browser = await chromium.launch({
     channel: 'chrome',
@@ -122,7 +127,7 @@ async function main() {
     }
 
     if (args.stills) {
-      const stillsDir = join(OUT_DIR, 'stills');
+      const stillsDir = join(OUT_DIR, 'stills', episode.id);
       await mkdir(stillsDir, { recursive: true });
       for (const s of args.stills.split(',').map(Number)) {
         const png = await grabFrame(first, Math.round(s * info.fps));
@@ -184,7 +189,7 @@ async function main() {
     await rm(segDir, { recursive: true, force: true });
 
     const srt = join(OUT_DIR, `${VIDEO_SLUG}.srt`);
-    await writeFile(srt, toSrt());
+    await writeFile(srt, toSrt(episode.cues));
     console.log(`Done in ${((Date.now() - started) / 60000).toFixed(1)} min\n  ${output}\n  ${srt}`);
   } finally {
     await browser.close();

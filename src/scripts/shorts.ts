@@ -3,11 +3,11 @@
  * blurred background, the 16:9 clip in the middle, hook title on top and
  * large burned-in captions below, with the narration from the voiceover.
  *
- *   npm run shorts                       # all Shorts in src/scenes/cdn/shorts.ts
- *   npm run shorts -- --only cache-hit-vs-miss
+ *   npm run shorts                       # all Shorts of the latest episode
+ *   npm run shorts -- --episode cdn --only cache-hit-vs-miss
  *
- * Needs output/renders/how-a-cdn-works-1080p.mp4 (npm run record) and
- * how-a-cdn-works-voiceover.wav (npm run voiceover). Writes one .mp4 per Short
+ * Needs the episode's 1080p render (npm run record) and voiceover .wav
+ * (npm run voiceover). Writes one .mp4 per Short to output/renders/shorts/<episode>/
  * plus SHORTS.md with titles and descriptions ready to paste.
  */
 import { spawn } from 'node:child_process';
@@ -15,18 +15,16 @@ import { existsSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
-import { CUES } from '../scenes/cdn/script.ts';
-import { SHORTS, type Short } from '../scenes/cdn/shorts.ts';
+import type { Short } from '../components/Script.ts';
+import { getEpisode } from '../scenes/episodes.ts';
 
-const VIDEO_SLUG = 'how-a-cdn-works';
 const ROOT = resolve(import.meta.dirname, '../..');
 const RENDERS = join(ROOT, 'output/renders');
-const OUT_DIR = join(RENDERS, 'shorts');
 
 const WIDTH = 1080;
 const HEIGHT = 1920;
 /** Top of the 16:9 clip inside the vertical frame. */
-const CLIP_Y = 600;
+const CLIP_Y = 640;
 const CLIP_HEIGHT = Math.round((WIDTH * 9) / 16);
 /** Extra time after the last cue so a late-running line isn't clipped. */
 const TAIL = 0.6;
@@ -35,11 +33,18 @@ const FONT = 'Helvetica Neue';
 
 const { values: args } = parseArgs({
   options: {
-    video: { type: 'string', default: join(RENDERS, `${VIDEO_SLUG}-1080p.mp4`) },
-    audio: { type: 'string', default: join(RENDERS, `${VIDEO_SLUG}-voiceover.wav`) },
+    episode: { type: 'string' },
+    video: { type: 'string' },
+    audio: { type: 'string' },
     only: { type: 'string' },
   },
 });
+
+const episode = getEpisode(args.episode);
+const { cues: CUES, shorts: SHORTS } = episode;
+const OUT_DIR = join(RENDERS, 'shorts', episode.id);
+const inputVideo = args.video ?? join(RENDERS, `${episode.slug}-1080p.mp4`);
+const inputAudio = args.audio ?? join(RENDERS, `${episode.slug}-voiceover.wav`);
 
 function ffmpeg(argv: string[]): Promise<void> {
   return new Promise((ok, fail) => {
@@ -52,6 +57,8 @@ const assTime = (s: number) => {
   const cs = Math.max(0, Math.round(s * 100));
   return `${Math.floor(cs / 360000)}:${String(Math.floor(cs / 6000) % 60).padStart(2, '0')}:${String(Math.floor(cs / 100) % 60).padStart(2, '0')}.${String(cs % 100).padStart(2, '0')}`;
 };
+/** '#rrggbb' → ASS '&HBBGGRR&'. */
+const assColor = (hex: string) => `&H${hex.slice(5, 7)}${hex.slice(3, 5)}${hex.slice(1, 3)}&`.toUpperCase();
 const assText = (s: string) => s.replace(/[{}]/g, '').replace(/\n/g, '\\N');
 
 /** Title, part counter, captions and footer as an ASS subtitle script. */
@@ -59,10 +66,15 @@ function buildAss(short: Short, index: number, duration: number): string {
   const end = assTime(duration);
   const captionY = CLIP_Y + CLIP_HEIGHT + 70;
   const events = [
-    `Dialogue: 0,0:00:00.00,${end},Kicker,,0,0,0,,{\\an8\\pos(${WIDTH / 2},250)}HOW A CDN WORKS · ${index + 1}/${SHORTS.length}`,
-    `Dialogue: 0,0:00:00.00,${end},Title,,0,0,0,,{\\an8\\pos(${WIDTH / 2},320)}${assText(short.hook)}`,
-    `Dialogue: 0,0:00:00.00,${end},Footer,,0,0,0,,{\\an2\\pos(${WIDTH / 2},1560)}Full video on Data Packet`,
+    `Dialogue: 0,0:00:00.00,${end},Kicker,,0,0,0,,{\\an8\\pos(${WIDTH / 2},230)}${assText(episode.kicker)}`,
+    `Dialogue: 0,0:00:00.00,${end},Title,,0,0,0,,{\\an8\\pos(${WIDTH / 2},295)}${assText(short.hook)}`,
   ];
+  const beats = short.beats ?? [];
+  beats.forEach((beat, i) => {
+    const a = Math.max(0, beat.at - short.start);
+    const b = i + 1 < beats.length ? beats[i + 1].at - short.start : duration;
+    events.push(`Dialogue: 0,${assTime(a)},${assTime(b)},Beat,,0,0,0,,{\\an2\\pos(${WIDTH / 2},${CLIP_Y - 28})\\c${assColor(beat.color)}\\fad(150,0)}${assText(beat.text)}`);
+  });
   for (const cue of CUES) {
     if (cue.end <= short.start || cue.start >= short.end) continue;
     const a = Math.max(0, cue.start - short.start);
@@ -79,9 +91,9 @@ ScaledBorderAndShadow: yes
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
 Style: Kicker,${FONT},40,&H00EED322,&H00FFFFFF,&H000F0805,&H00000000,1,0,0,0,100,100,2,0,1,3,0,8,80,80,0,1
-Style: Title,${FONT},84,&H00F9F5F1,&H00FFFFFF,&H000F0805,&H00000000,1,0,0,0,100,100,0,0,1,6,0,8,80,80,0,1
+Style: Title,${FONT},78,&H00F9F5F1,&H00FFFFFF,&H000F0805,&H00000000,1,0,0,0,100,100,0,0,1,6,0,8,80,80,0,1
 Style: Caption,${FONT},62,&H00FFFFFF,&H00FFFFFF,&H000F0805,&H00000000,1,0,0,0,100,100,0,0,1,6,0,8,90,90,0,1
-Style: Footer,${FONT},34,&H00B8A394,&H00FFFFFF,&H000F0805,&H00000000,0,0,0,0,100,100,0,0,1,2,0,2,80,80,0,1
+Style: Beat,${FONT},48,&H00FFFFFF,&H00FFFFFF,&H00200F0A,&H00200F0A,1,0,0,0,100,100,1,0,3,14,0,2,80,80,0,1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -108,8 +120,8 @@ async function renderShort(short: Short, index: number) {
 
   const output = `${base}.mp4`;
   await ffmpeg([
-    '-ss', String(short.start), '-t', duration.toFixed(2), '-i', args.video!,
-    '-ss', String(short.start), '-t', duration.toFixed(2), '-i', args.audio!,
+    '-ss', String(short.start), '-t', duration.toFixed(2), '-i', inputVideo,
+    '-ss', String(short.start), '-t', duration.toFixed(2), '-i', inputAudio,
     '-filter_complex', filter, '-map', '[v]', '-map', '[a]',
     '-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-pix_fmt', 'yuv420p', '-r', '30',
     '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', output,
@@ -136,21 +148,21 @@ Description:
 \`\`\`
 ${s.description}
 
-Full 7-minute explainer: [link to "How a CDN Works"]
+Full explainer: [link to "${episode.title}"]
 
 ${['#Shorts', ...s.hashtags].join(' ')}
 \`\`\`
 `;
   });
-  return `# Shorts: How a CDN Works
+  return `# Shorts: ${episode.title}
 
-Upload each Short after the full video is live, then replace \`[link to "How a CDN Works"]\` with its URL and set the Short's "Related video" to the full video.
+Upload each Short after the full video is live, then replace \`[link to "${episode.title}"]\` with its URL and set the Short's "Related video" to the full video.
 
 ${blocks.join('\n')}`;
 }
 
 async function main() {
-  for (const file of [args.video!, args.audio!]) {
+  for (const file of [inputVideo, inputAudio]) {
     if (!existsSync(file)) throw new Error(`Missing ${file}. Run npm run record and npm run voiceover first.`);
   }
   await mkdir(OUT_DIR, { recursive: true });

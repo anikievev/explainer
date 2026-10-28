@@ -3,18 +3,7 @@
  * and ends on narration cue boundaries (see script.ts) so no line is cut off,
  * and stays under 60 s.
  */
-export interface Short {
-  slug: string;
-  /** Video time range in seconds. */
-  start: number;
-  end: number;
-  /** Big on-screen title, shown for the whole Short. */
-  hook: string;
-  /** YouTube title (≤ 100 characters, #Shorts added automatically). */
-  title: string;
-  description: string;
-  hashtags: string[];
-}
+import type { Short } from '../../components/Script.ts';
 
 export const SHORTS: Short[] = [
   {
@@ -42,6 +31,10 @@ export const SHORTS: Short[] = [
     start: 216,
     end: 272,
     hook: 'Cache HIT vs. cache MISS',
+    beats: [
+      { at: 216, text: 'Case 1 · HIT', color: '#34d399' },
+      { at: 237, text: 'Case 2 · MISS', color: '#fbbf24' },
+    ],
     title: 'Cache HIT vs. cache MISS, explained in under a minute',
     description:
       'logo.png is already at the Frankfurt edge, so it comes straight back. hero.jpg is new in Tokyo, so the edge fetches it from the origin once and keeps a copy for everyone after.',
@@ -61,7 +54,13 @@ export const SHORTS: Short[] = [
     slug: 'when-a-cdn-doesnt-help',
     start: 330,
     end: 383,
-    hook: "When a CDN doesn't help",
+    hook: '4 times a CDN barely helps',
+    beats: [
+      { at: 336, text: '1/4 · Personal data', color: '#fbbf24' },
+      { at: 356, text: '2/4 · Rarely requested files', color: '#fbbf24' },
+      { at: 362, text: '3/4 · Users near the origin', color: '#fbbf24' },
+      { at: 369, text: '4/4 · Slow backend', color: '#f87171' },
+    ],
     title: "4 cases where a CDN barely helps",
     description:
       'Personal pages, rarely requested files, users already near the origin, and a slow backend. A CDN shortens the distance. It does not fix slow code.',
