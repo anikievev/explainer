@@ -9,8 +9,13 @@ import { Hud } from './components/Hud.ts';
 import { getVideoSettings, type ResolutionName } from './config/video-settings.ts';
 import { CdnScene } from './scenes/cdn/CdnScene.ts';
 import { CdnThumbnail } from './scenes/cdn/Thumbnail.ts';
+import { LbThumbnail } from './scenes/load-balancer/Thumbnail.ts';
+import { MqScene } from './scenes/message-queue/MqScene.ts';
+import { MqThumbnail } from './scenes/message-queue/Thumbnail.ts';
 import { ChannelBanner } from './scenes/channel/ChannelBanner.ts';
+import { LbScene } from './scenes/load-balancer/LbScene.ts';
 import { DEFAULT_EPISODE } from './scenes/episodes.ts';
+import { parseVariant, type VariantId } from './components/ThumbnailKit.ts';
 
 /** What every renderable scene (video, thumbnail, banner) provides. */
 interface Stage {
@@ -23,10 +28,18 @@ interface Stage {
 }
 
 /** Scene classes per episode id (ids match src/scenes/episodes.ts). */
-const SCENES: Record<string, { video(aspect: number, captions: boolean): Stage; thumbnail(aspect: number): Stage }> = {
+const SCENES: Record<string, { video(aspect: number, captions: boolean): Stage; thumbnail(aspect: number, variant: VariantId): Stage }> = {
   cdn: {
     video: (aspect, captions) => new CdnScene(aspect, captions),
-    thumbnail: (aspect) => new CdnThumbnail(aspect),
+    thumbnail: (aspect, variant) => new CdnThumbnail(aspect, variant),
+  },
+  'load-balancer': {
+    video: (aspect, captions) => new LbScene(aspect, captions),
+    thumbnail: (aspect, variant) => new LbThumbnail(aspect, variant),
+  },
+  'message-queue': {
+    video: (aspect, captions) => new MqScene(aspect, captions),
+    thumbnail: (aspect, variant) => new MqThumbnail(aspect, variant),
   },
 };
 
@@ -38,6 +51,7 @@ const SCENES: Record<string, { video(aspect: number, captions: boolean): Stage; 
  *   ?res=4k            3840×2160 instead of 1920×1080
  *   ?captions=1        burn narration captions in (preview only)
  *   ?thumbnail=1       the static YouTube thumbnail instead of the video
+ *   &variant=b         which thumbnail A/B variant (a, b, c; default a)
  *   ?banner=1          the YouTube channel banner
  */
 const params = new URLSearchParams(location.search);
@@ -59,7 +73,7 @@ if (!episodeScenes) throw new Error(`Unknown episode "${params.get('episode')}"`
 const stage: Stage = params.has('banner')
   ? new ChannelBanner(aspect)
   : params.has('thumbnail')
-    ? episodeScenes.thumbnail(aspect)
+    ? episodeScenes.thumbnail(aspect, parseVariant(params.get('variant')))
     : episodeScenes.video(aspect, params.has('captions'));
 const hud = new Hud(settings.width, settings.height, stage.camera);
 

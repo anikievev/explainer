@@ -9,6 +9,8 @@ export interface Cue {
   text: string;
   /** Spoken form for the voiceover, when the caption text reads badly aloud. */
   say?: string;
+  /** Extra silence (s) after the line, where the animation needs time. Used by retime. */
+  hold?: number;
 }
 
 export interface Section {
@@ -39,6 +41,8 @@ export interface Short {
   hashtags: string[];
   /** Optional step pill under the title (list progress, HIT → MISS). */
   beats?: Beat[];
+  /** Video time (s) of the cover frame, used as the Short's thumbnail. Default: 2 s into the first beat, else 4 s in. */
+  cover?: number;
 }
 
 export function findCue(cues: Cue[], t: number): Cue | undefined {

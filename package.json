@@ -10,7 +10,8 @@
     "record:4k": "node src/scripts/record.ts --4k",
     "voiceover": "node --env-file=.env.local src/scripts/voiceover.ts",
     "shorts": "node src/scripts/shorts.ts",
-    "release": "npm run record && npm run voiceover && npm run shorts"
+    "release": "npm run record && npm run voiceover && npm run shorts",
+    "retime": "node src/scripts/retime.ts"
   },
   "dependencies": {
     "@elevenlabs/elevenlabs-js": "^2.74.0",

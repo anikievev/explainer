@@ -142,3 +142,92 @@ export function createFileCube(color: number = COLORS.network): NodeMesh {
   node.top.position.set(0, 0.3, 0);
   return node;
 }
+
+/** Load balancer: wide flat unit with a fan-out light strip (one LED per lane). */
+export function createLoadBalancer(): NodeMesh {
+  const node = new NodeMesh('load-balancer');
+  const bodyMat = standard(0x3b4a6b, 0x1e293b, 0.5);
+  const stripMat = standard(COLORS.network, COLORS.network, 2.0);
+  const ledMat = standard(COLORS.healthy, COLORS.healthy, 2.2);
+  node.addStatusMaterial(ledMat);
+  node.addMesh(new THREE.BoxGeometry(0.95, 0.24, 0.62), bodyMat, [0, 0.14, 0]);
+  node.addMesh(new THREE.BoxGeometry(0.75, 0.05, 0.5), bodyMat, [0, 0.29, 0]);
+  const laneGeo = new THREE.BoxGeometry(0.03, 0.025, 0.22);
+  for (let i = -1; i <= 1; i++) {
+    node.addMesh(laneGeo, stripMat, [0.12 + i * 0.12, 0.33, 0]).rotation.y = i * 0.45;
+  }
+  node.addMesh(new THREE.BoxGeometry(0.06, 0.06, 0.02), ledMat, [-0.36, 0.14, 0.315]);
+  node.addMesh(new THREE.BoxGeometry(0.22, 0.025, 0.02), stripMat, [0.08, 0.14, 0.315]);
+  node.top.position.set(0, 0.42, 0);
+  return node;
+}
+
+/** Database: stacked purple cylinders (storage colour). */
+export function createDatabase(color: number = COLORS.storage): NodeMesh {
+  const node = new NodeMesh('database');
+  const mat = standard(color, color, 0.6);
+  const geo = new THREE.CylinderGeometry(0.28, 0.28, 0.16, 32);
+  for (let i = 0; i < 3; i++) node.addMesh(geo, mat, [0, 0.1 + i * 0.2, 0]);
+  const ringMat = standard(COLORS.healthy, COLORS.healthy, 2.0);
+  node.addStatusMaterial(ringMat);
+  node.addMesh(new THREE.TorusGeometry(0.3, 0.015, 8, 40), ringMat, [0, 0.62, 0]).rotation.x = Math.PI / 2;
+  node.top.position.set(0, 0.72, 0);
+  return node;
+}
+
+/** Message queue: a translucent purple tube (storage colour) lying along x, open at both ends. */
+export function createQueueBroker(length = 3.4): NodeMesh {
+  const node = new NodeMesh('queue');
+  const glass = standard(COLORS.storage, COLORS.storage, 0.35, { transparent: true, opacity: 0.22, depthWrite: false });
+  const rimMat = standard(COLORS.storage, COLORS.storage, 1.8);
+  node.addStatusMaterial(rimMat);
+  node.addMesh(new THREE.CylinderGeometry(0.42, 0.42, length, 40, 1, true), glass, [0, 0.46, 0]).rotation.z = Math.PI / 2;
+  for (const x of [-length / 2, length / 2]) {
+    node.addMesh(new THREE.TorusGeometry(0.42, 0.03, 10, 40), rimMat, [x, 0.46, 0]).rotation.y = Math.PI / 2;
+  }
+  const feetGeo = new THREE.BoxGeometry(0.08, 0.06, 0.5);
+  const feetMat = standard(0x334155);
+  for (const x of [-length / 2 + 0.3, length / 2 - 0.3]) node.addMesh(feetGeo, feetMat, [x, 0.03, 0]);
+  node.top.position.set(0, 0.95, 0);
+  return node;
+}
+
+/** Worker (consumer): a compact two-unit server with a large status light. */
+export function createWorker(): NodeMesh {
+  const node = new NodeMesh('worker');
+  const bodyMat = standard(0x3b4a6b, 0x1e293b, 0.5);
+  const ledMat = standard(COLORS.healthy, COLORS.healthy, 2.2);
+  node.addStatusMaterial(ledMat);
+  const unitGeo = new THREE.BoxGeometry(0.5, 0.2, 0.42);
+  for (let i = 0; i < 2; i++) node.addMesh(unitGeo, bodyMat, [0, 0.11 + i * 0.22, 0]);
+  node.addMesh(new THREE.BoxGeometry(0.3, 0.035, 0.02), ledMat, [-0.04, 0.11, 0.215]);
+  node.addMesh(new THREE.BoxGeometry(0.3, 0.035, 0.02), ledMat, [-0.04, 0.33, 0.215]);
+  node.addMesh(new THREE.TorusGeometry(0.1, 0.03, 8, 6), ledMat, [0, 0.5, 0]).rotation.x = Math.PI / 2;
+  node.top.position.set(0, 0.58, 0);
+  return node;
+}
+
+/** Dead-letter queue: an open red-rimmed bin. */
+export function createDeadLetterBin(): NodeMesh {
+  const node = new NodeMesh('dead-letter-queue');
+  const wallMat = standard(0x3f1d24, 0x2a0f14, 0.4);
+  const rimMat = standard(COLORS.failure, COLORS.failure, 1.6);
+  node.addStatusMaterial(rimMat);
+  const w = 0.9;
+  const h = 0.42;
+  const wall = new THREE.BoxGeometry(w, h, 0.04);
+  const side = new THREE.BoxGeometry(0.04, h, w);
+  node.addMesh(new THREE.BoxGeometry(w, 0.04, w), wallMat, [0, 0.02, 0]);
+  node.addMesh(wall, wallMat, [0, h / 2, -w / 2]);
+  node.addMesh(wall, wallMat, [0, h / 2, w / 2]);
+  node.addMesh(side, wallMat, [-w / 2, h / 2, 0]);
+  node.addMesh(side, wallMat, [w / 2, h / 2, 0]);
+  const rimX = new THREE.BoxGeometry(w + 0.06, 0.04, 0.06);
+  const rimZ = new THREE.BoxGeometry(0.06, 0.04, w + 0.06);
+  node.addMesh(rimX, rimMat, [0, h, -w / 2]);
+  node.addMesh(rimX, rimMat, [0, h, w / 2]);
+  node.addMesh(rimZ, rimMat, [-w / 2, h, 0]);
+  node.addMesh(rimZ, rimMat, [w / 2, h, 0]);
+  node.top.position.set(0, h + 0.1, 0);
+  return node;
+}

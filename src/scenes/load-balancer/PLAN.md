@@ -98,11 +98,11 @@ Episode 1 hard-codes the CDN in the pipeline. Make it multi-video first (about h
 |---|---|---|
 | 1 | ~~Refactor to multi-video~~ done (section 4) | Episode 1 renders pixel-identical |
 | 2 | ~~Verify facts~~ done (section 2) | Sources in this plan; copy to `SCRIPT.md` |
-| 3 | Write the full narration with timed cues at 2.2 words/s | `script.ts`, `SCRIPT.md` |
-| 4 | Voiceover dry run before building visuals; fix overruns in text | Clip lengths fit their slots |
-| 5 | Build components, then the scene section by section | Stills at each beat for review |
-| 6 | Full render, voiceover mux, captions | `how-load-balancers-work-1080p-voiced.mp4`, `.srt` |
-| 7 | Thumbnail, Shorts, YouTube metadata | Same tools as episode 1 |
+| 3 | ~~Write the full narration~~ done: 64 lines, 6:40 | `script.ts`, `SCRIPT.md` |
+| 4 | ~~Voiceover dry run~~ done: timings locked to real clip lengths, no overruns | `how-load-balancers-work-voiceover.wav` |
+| 5 | ~~Build components and scene~~ done: `LbScene`, `ShopStage`, `IntroMap`; beats anchored to cue text (`beats.ts`) | Stills reviewed in 3 passes |
+| 6 | ~~Full render, voiceover mux, captions~~ done | `how-load-balancers-work-1080p-voiced.mp4`, `.srt` |
+| 7 | ~~Thumbnail, Shorts, YouTube metadata~~ done | `Thumbnail.ts`, `shorts.ts` (4 Shorts), `YOUTUBE.md` |
 
 Step 4 is new: generating the voiceover **before** animating locks the real timing, so the visual beats are built to the actual audio instead of being re-fitted afterwards.
 

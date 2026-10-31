@@ -9,19 +9,20 @@
  *   node src/scripts/record.ts --from 210 --to 240 --workers 4
  *   node src/scripts/record.ts --stills 2,60,150  # PNG stills only
  *   node src/scripts/record.ts --export-mascot    # mascot model → src/assets/models/mascot.glb
- *   node src/scripts/record.ts --thumbnail        # 1280×720 YouTube thumbnail (rendered at 4K)
+ *   node src/scripts/record.ts --thumbnail        # 1280×720 YouTube thumbnails, A/B variants a-c (rendered at 4K)
  *   node src/scripts/record.ts --banner           # 2560×1440 YouTube channel banner (rendered at 4K)
  *
  * Requires ffmpeg on PATH and Google Chrome installed.
  */
 import { spawn } from 'node:child_process';
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, rm, writeFile } from 'node:fs/promises';
 import { cpus } from 'node:os';
 import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { chromium, type Page } from 'playwright-core';
 import { createServer } from 'vite';
 import { toSrt } from '../components/Script.ts';
+import { VARIANTS } from '../components/ThumbnailKit.ts';
 import { getEpisode } from '../scenes/episodes.ts';
 
 const ROOT = resolve(import.meta.dirname, '../..');
@@ -82,10 +83,10 @@ async function main() {
     args: ['--ignore-gpu-blocklist', '--enable-gpu-rasterization', '--use-angle=metal', '--disable-background-timer-throttling'],
   });
 
-  const openPage = async () => {
+  const openPage = async (query = '') => {
     const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
     page.on('pageerror', (err) => console.error('[page]', err.message));
-    await page.goto(url);
+    await page.goto(url + query);
     await page.waitForFunction(() => window.__explainer !== undefined, undefined, { timeout: 60_000 });
     return page;
   };
@@ -116,13 +117,36 @@ async function main() {
     }
 
     if (args.thumbnail) {
-      const source = join(OUT_DIR, `${VIDEO_SLUG}-thumbnail-4k.png`);
-      await writeFile(source, await grabFrame(first, 0));
-      const png = join(OUT_DIR, `${VIDEO_SLUG}-thumbnail.png`);
-      const jpg = join(OUT_DIR, `${VIDEO_SLUG}-thumbnail.jpg`);
-      await ffmpeg(['-i', source, '-vf', 'scale=1280:720:flags=lanczos', png]).done;
-      await ffmpeg(['-i', source, '-vf', 'scale=1280:720:flags=lanczos', '-q:v', '2', jpg]).done;
-      console.log(`${png}\n${jpg}`);
+      // One file per A/B variant for YouTube "Test & compare"; variant a is also the default thumbnail.
+      const pngs: string[] = [];
+      for (const variant of VARIANTS) {
+        const page = variant === 'a' ? first : await openPage(`&variant=${variant}`);
+        const source = join(OUT_DIR, `${VIDEO_SLUG}-thumbnail-${variant}-4k.png`);
+        await writeFile(source, await grabFrame(page, 0));
+        const png = join(OUT_DIR, `${VIDEO_SLUG}-thumbnail-${variant}.png`);
+        const jpg = join(OUT_DIR, `${VIDEO_SLUG}-thumbnail-${variant}.jpg`);
+        await ffmpeg(['-i', source, '-vf', 'scale=1280:720:flags=lanczos', png]).done;
+        await ffmpeg(['-i', source, '-vf', 'scale=1280:720:flags=lanczos', '-q:v', '2', jpg]).done;
+        if (variant === 'a') {
+          await copyFile(png, join(OUT_DIR, `${VIDEO_SLUG}-thumbnail.png`));
+          await copyFile(jpg, join(OUT_DIR, `${VIDEO_SLUG}-thumbnail.jpg`));
+        }
+        pngs.push(png);
+        console.log(jpg);
+      }
+      // Review sheet: the variants at 640×360 (top) and at phone size 320×180 (bottom).
+      const preview = join(OUT_DIR, `${VIDEO_SLUG}-thumbnails-preview.png`);
+      const scaled = pngs.map((_, i) => `[${i}:v]split[f${i}][s${i}];[f${i}]scale=640:360[big${i}];[s${i}]scale=320:180[small${i}]`).join(';');
+      const layout = '0_0|640_0|1280_0|0_380|640_380|1280_380';
+      await ffmpeg([
+        ...pngs.flatMap((p) => ['-i', p]),
+        '-filter_complex',
+        `${scaled};[big0][big1][big2][small0][small1][small2]xstack=inputs=6:layout=${layout}:fill=black[out]`,
+        '-map',
+        '[out]',
+        preview,
+      ]).done;
+      console.log(preview);
       return;
     }
 

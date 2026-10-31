@@ -4,7 +4,7 @@
 
 This project produces faceless YouTube videos that explain cloud and software architecture using animated 3D scenes built with Three.js.
 
-The channel concept is: **“Cloud architecture explained visually.”**
+The channel concept is: **“System design, animated.”** One building block per video: how it works and how it fails. Audience: developers learning system design, including for interviews. Positioning, evidence and out-of-scope topics live in `src/scenes/channel/CHANNEL.md`.
 
 Each video turns a technical concept—such as Kubernetes, CDNs, load balancers, microservices, queues, databases, or failure handling—into a short, clear 3D animation. The final deliverable is a recorded video ready for voiceover, captions, music, and editing.
 
@@ -17,7 +17,7 @@ Each video turns a technical concept—such as Kubernetes, CDNs, load balancers,
 - Avoid interactive UI, mouse controls, and debug overlays in final renders.
 - Keep scenes modular so assets, lighting, camera paths, and labels can be reused across videos.
 - Prefer stylized “technical diagram” visuals over photorealism.
-- Make the first 3 seconds visually engaging and clearly state the topic.
+- Make the first 3 seconds visually engaging and clearly state the topic.First seconds decide everything. Hook them immediately 
 
 ## Tech stack
 
@@ -128,6 +128,47 @@ const recorder = new MediaRecorder(stream, {
 - Save raw recordings in `output/recordings/`.
 - Save final edited videos outside the repository or in a separate media storage location.
 
+## Thumbnails
+
+Every episode thumbnail is a static scene (`src/scenes/<episode>/Thumbnail.ts`) built with the shared kit in `src/components/ThumbnailKit.ts`, so the series reads as one.
+
+- **Hook:** 2–4 words, top-left, at most two lines, one accent colour per line. Long explanatory text reads like a slide and loses clicks. `pickVariant()` fails the render above 4 words.
+
+ Here are a few hook angles that consistently worked:
+
+Curiosity gaps - hint at something without explaining it:
+
+“This Changed Everything” or “Didn’t Expect This”
+
+Negative / risk - triggers fear of mistakes or loss:
+
+“Big Mistake” or “I Regret This”
+
+Positive payoff - promise a clear upside:
+
+“Worth Every Penny” or “Best Decision”
+
+Surprise / disbelief - break expectations:
+
+“This Worked?” or “I Was Shocked”
+
+Authority / certainty - strong, confident statements:
+
+“Do This Instead” or “Stop Doing This”
+
+Contrast - before vs after, good vs bad:
+
+“Then vs Now” or “Cheap vs Expensive” 
+- **No title pill:** don't repeat "How X Works" on the thumbnail; the video title already says it.
+- **Layout:** text on the left, subject on the right (viewers scan left to right). One clear subject, not a whole diagram.
+- **Extra text:** at most one or two big number badges (`numberBadge`, ≥ 60 px), readable on a phone. No small labels.
+- **Background:** a coloured `glow()` behind the subject plus `vignette()` instead of flat navy. Red for the problem side, green for the fix, purple for storage or queues.
+- **Mascot:** large (about 40% of the height), next to the subject, with an expression that matches the hook: `poseSurprised` for risk or surprise, `poseCheer` for payoff, `posePoint` for contrast.
+- **Bottom-right corner stays empty:** YouTube draws the duration badge there. `assertClearOfBadge()` fails the render if a badge lands in it.
+- **Three A/B variants per episode** (`a`, `b`, `c`): the same scene with a different hook type (risk, curiosity, payoff, surprise, contrast) for YouTube Test & compare. Every hook must match a verified claim in the episode script.
+- **Render and review:** `node src/scripts/record.ts --episode <id> --thumbnail` writes `<slug>-thumbnail-{a,b,c}.jpg/png` (variant `a` is also `<slug>-thumbnail.jpg`) and `<slug>-thumbnails-preview.png`. Check the preview sheet at 320×180 (phone size) before uploading.
+- **Shorts get a cover, not a designed thumbnail:** most Shorts views come from the feed, where no thumbnail shows. Set `cover` (video time, anchored to a cue) on each Short at a strong moment. `npm run shorts` writes a clean `-cover.png` (hook + step pill, no captions) and puts the frame time in `SHORTS.md` for Studio's frame picker. Upload the PNG once custom Shorts thumbnails are available to the channel.
+
 ## Content guidelines
 
 ### Video formats
@@ -148,6 +189,21 @@ Use these repeatable formats:
 
 5. **Architecture teardown**  
    Example: “How a Netflix-style streaming system is designed.”
+
+### Topic selection
+
+- Stay inside the niche: system design building blocks (concepts, not tools). Defer Kubernetes, AWS how-tos and broad DevOps.
+- **Demand check before scripting:** search YouTube for the topic, find videos on channels under 200k subscribers that got ≥3× their channel's median views in the last 12 months, and note the angle and title that worked. Read the top comments on those videos; repeated questions become script beats. Record findings in the episode's `PLAN.md`. Never invent numbers.
+- Roadmap (each item still demand-checked): caching (next), database indexes / replication, sharding, rate limiting, idempotency / exactly-once, API gateway vs reverse proxy vs load balancer, consistent hashing, CAP theorem.
+
+### Titles
+
+- Plain "X explained" searches are owned by big, older channels. Win on angle: prepare a "How X Works" title plus a myth or failure title (e.g. "Why Your Order Got Charged Twice", "Load Balancers Don't Work Like You Think") and test them.
+- Bare topic words are noisy in search ("kafka", "cdn"). Put "system design" in the tags and in the description's closing line.
+
+### After upload
+
+- Log results in the episode's `PLAN.md` under "Results" after 7 days: CTR, average view duration, where retention drops, and the one thing to improve in the next episode.
 
 ### Video structure
 

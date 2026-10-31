@@ -8,6 +8,9 @@
 import type { Cue, Short } from '../components/Script.ts';
 import { CUES as CDN_CUES, DURATION as CDN_DURATION } from './cdn/script.ts';
 import { SHORTS as CDN_SHORTS } from './cdn/shorts.ts';
+import { CUES as LB_CUES, DURATION as LB_DURATION } from './load-balancer/script.ts';
+import { SHORTS as LB_SHORTS } from './load-balancer/shorts.ts';
+import { CUES as MQ_CUES, DURATION as MQ_DURATION } from './message-queue/script.ts';
 
 export interface Episode {
   id: string;
@@ -19,6 +22,8 @@ export interface Episode {
   duration: number;
   cues: Cue[];
   shorts: Short[];
+  /** Cue times are locked to the voiceover by `npm run retime`. */
+  autoTimed?: boolean;
 }
 
 export const EPISODES: Record<string, Episode> = {
@@ -30,6 +35,26 @@ export const EPISODES: Record<string, Episode> = {
     duration: CDN_DURATION,
     cues: CDN_CUES,
     shorts: CDN_SHORTS,
+  },
+  'load-balancer': {
+    id: 'load-balancer',
+    slug: 'how-load-balancers-work',
+    title: 'How Load Balancers Work',
+    kicker: 'HOW LOAD BALANCERS WORK',
+    duration: LB_DURATION,
+    cues: LB_CUES,
+    shorts: LB_SHORTS,
+    autoTimed: true,
+  },
+  'message-queue': {
+    id: 'message-queue',
+    slug: 'how-message-queues-work',
+    title: 'How Message Queues Work',
+    kicker: 'HOW MESSAGE QUEUES WORK',
+    duration: MQ_DURATION,
+    cues: MQ_CUES,
+    shorts: [],
+    autoTimed: true,
   },
 };
 

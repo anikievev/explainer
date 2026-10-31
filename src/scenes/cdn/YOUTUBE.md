@@ -59,7 +59,7 @@ What you'll see:
 
 ▶️ Next episode: how load balancers spread traffic across many servers. Subscribe so you catch it.
 
-Data Packet explains cloud architecture with animated 3D diagrams. Small packets. Big ideas.
+Data Packet explains system design with animated 3D diagrams. Small packets. Big ideas.
 
 #CDN #CloudArchitecture #WebPerformance
 ```
@@ -77,7 +77,7 @@ Only the first ~150 characters show before "…more", in search results and unde
 Paste as comma-separated (≈ 370 characters; limit 500):
 
 ```
-cdn, how a cdn works, content delivery network, cdn explained, edge server, edge computing, points of presence, cache hit, cache miss, cache-control, max-age, 304 not modified, etag, cache purge, anycast, bgp, dns, latency, round trip time, web performance, cloudflare, cloudfront, akamai, fastly, cloud architecture, system design, devops, networking basics, data packet
+cdn, how a cdn works, content delivery network, cdn explained, edge server, edge computing, points of presence, cache hit, cache miss, cache-control, max-age, 304 not modified, etag, cache purge, anycast, bgp, dns, latency, round trip time, web performance, cloudflare, cloudfront, akamai, fastly, system design, system design interview, networking basics, data packet
 ```
 
 ## Upload settings
@@ -95,7 +95,7 @@ cdn, how a cdn works, content delivery network, cdn explained, edge server, edge
 | Shorts remixing | Allow video and audio |
 | Paid promotion | No |
 | Altered or synthetic content | No — animated diagrams with an AI narrator voice don't show realistic people, places or events (see note) |
-| Playlist | "Cloud Architecture Explained" (create one) |
+| Playlist | "Cloud Architecture" (create one) |
 | Location | none |
 
 **Synthetic content note:** YouTube requires disclosure only for *realistic* altered content, such as a real person saying something they didn't, or realistic footage of events that didn't happen. A generated narrator voice over animation doesn't fall under that. If voice `Gfpl8Yo74Is0W6cPUWWT` is a clone of a real person other than you, choose **Yes**.
@@ -128,14 +128,15 @@ What happens next — and who gets a cache HIT afterwards? 👇
 
 ## Thumbnail
 
-Upload `output/renders/how-a-cdn-works-thumbnail.jpg` (1280×720, 121 KB). Re-render with `node src/scripts/record.ts --thumbnail` (scene: `Thumbnail.ts`).
+Three A/B variants for YouTube **Test & compare** (Studio → video → Thumbnail → Test & compare): upload all three, YouTube picks the winner by watch time. Re-render with `node src/scripts/record.ts --episode cdn --thumbnail` (scene: `Thumbnail.ts`, style rules: `src/components/ThumbnailKit.ts`); review sheet incl. phone size: `output/renders/how-a-cdn-works-thumbnails-preview.png`.
 
-Brief:
+| File | Hook | Type |
+|---|---|---|
+| `how-a-cdn-works-thumbnail-a.jpg` (also `-thumbnail.jpg`) | WHY IT'S FAST | payoff |
+| `how-a-cdn-works-thumbnail-b.jpg` | ~100 MS → ~10 MS | contrast |
+| `how-a-cdn-works-thumbnail-c.jpg` | FAR AWAY. STILL FAST. | curiosity |
 
-- **Text (≤ 4 words):** `WHY IT'S FAST` or `CDN EXPLAINED`
-- **Visual:** the Data Packet mascot running along a glowing blue arc from a Berlin pin to a Frankfurt edge server, world map dimmed behind; a small red "6,700 km" on a long faded arc vs. a green "400 km" on the short bright one.
-- **Colors:** channel navy background, mascot blue, one green and one red accent (matches the video's color coding).
-- **Size:** 1280×720 PNG/JPG, < 2 MB. Keep text clear of the bottom-right corner, where the duration badge sits.
+Same scene in all three: the long red trip to Virginia vs. the short green hop to Frankfurt, one big number on each arc, the mascot reacting. No title pill (the title already says "How a CDN Works"), bottom-right corner kept clear for the duration badge.
 
 ## Social / community post
 

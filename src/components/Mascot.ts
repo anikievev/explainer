@@ -219,6 +219,19 @@ export class Mascot {
     this.shadow.visible = v;
   }
 
+  /** Fade the whole figure (1 = solid). Used for "hidden" / in-flight states. */
+  setOpacity(opacity: number) {
+    this.body.parent?.traverse((o) => {
+      const mesh = o as THREE.Mesh;
+      if (!mesh.isMesh || mesh === this.shadow) return;
+      for (const m of Array.isArray(mesh.material) ? mesh.material : [mesh.material]) {
+        m.transparent = opacity < 1;
+        m.opacity = opacity;
+        m.depthWrite = opacity >= 1;
+      }
+    });
+  }
+
   dispose() {
     for (const d of this.disposables) d.dispose();
   }

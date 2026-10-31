@@ -2,10 +2,11 @@ import * as THREE from 'three';
 import type { Hud } from '../../components/Hud.ts';
 import { ArcPath } from '../../components/ArcPath.ts';
 import { MascotLayer } from '../../components/MascotLayer.ts';
-import { poseRun } from '../../components/Mascot.ts';
+import { poseCheer, posePoint, poseSurprised } from '../../components/Mascot.ts';
 import { createEdgeServer, createOriginServer, createUser, type NodeMesh } from '../../components/NodeMesh.ts';
+import { drawHook, glow, numberBadge, pickVariant, vignette, type ThumbnailVariant, type VariantId } from '../../components/ThumbnailKit.ts';
 import { WorldMap, geo } from '../../components/WorldMap.ts';
-import { COLORS, CSS, FONTS } from '../../config/theme.ts';
+import { COLORS, CSS } from '../../config/theme.ts';
 import { EDGES, ORIGIN_VIRGINIA, USERS } from './locations.ts';
 
 type V3 = THREE.Vector3Tuple;
@@ -13,28 +14,57 @@ type V3 = THREE.Vector3Tuple;
 const CAMERA_POSITION: V3 = [-3.3, 12.2, 3.9];
 const CAMERA_TARGET: V3 = [-3.3, 0, -4.7];
 const NODE_SCALE = 1.0;
-/** Pose time picked for a clean running stride. */
-const POSE_T = 0.17;
+/** Pose time picked for a clear gesture. */
+const POSE_T = 1.2;
+
+/** A/B variants for YouTube "Test & compare". Each hook matches a claim in the video. */
+const VARIANTS: ThumbnailVariant[] = [
+  {
+    id: 'a',
+    lines: [
+      { text: "WHY IT'S", color: '#f1f5f9' },
+      { text: 'FAST', color: CSS.healthy },
+    ],
+    pose: poseCheer,
+  },
+  {
+    id: 'b',
+    lines: [
+      { text: '~100 MS', color: CSS.failure },
+      { text: '→ ~10 MS', color: CSS.healthy },
+    ],
+    pose: posePoint,
+  },
+  {
+    id: 'c',
+    lines: [
+      { text: 'FAR AWAY.', color: '#f1f5f9' },
+      { text: 'STILL FAST.', color: CSS.healthy },
+    ],
+    pose: poseSurprised,
+  },
+];
 
 const lifted = (lonLat: [number, number]) => geo(...lonLat, 0.06);
 
 /**
  * Static YouTube thumbnail: Berlin's long trip to the Virginia origin (red)
- * vs. the short hop to the Frankfurt edge (green), with the mascot and title.
+ * vs. the short hop to the Frankfurt edge (green), with the mascot and hook.
  */
 export class CdnThumbnail {
   readonly scene = new THREE.Scene();
   readonly camera: THREE.PerspectiveCamera;
   readonly duration = 1;
   readonly presenter = new MascotLayer();
+  private readonly variant: ThumbnailVariant;
   private readonly map = new WorldMap();
   private readonly nodes: NodeMesh[] = [];
   private readonly longTrip: ArcPath;
   private readonly shortTrip: ArcPath;
-  private readonly origin: NodeMesh;
   private readonly edge: NodeMesh;
 
-  constructor(aspect: number) {
+  constructor(aspect: number, variant: VariantId = 'a') {
+    this.variant = pickVariant(VARIANTS, variant);
     this.camera = new THREE.PerspectiveCamera(35, aspect, 0.1, 200);
     this.camera.position.set(...CAMERA_POSITION);
     this.camera.lookAt(...CAMERA_TARGET);
@@ -46,7 +76,7 @@ export class CdnThumbnail {
     key.position.set(6, 12, 8);
     this.scene.add(key, this.map.group);
 
-    this.origin = this.place(createOriginServer(), lifted(ORIGIN_VIRGINIA).setY(0.04));
+    this.place(createOriginServer(), lifted(ORIGIN_VIRGINIA).setY(0.04));
     this.edge = this.place(createEdgeServer(), geo(...EDGES.frankfurt.lonLat));
     this.edge.setStatus(COLORS.healthy);
     this.place(createUser(), geo(...USERS.berlin.lonLat));
@@ -69,28 +99,21 @@ export class CdnThumbnail {
   }
 
   update() {
-    const pose = poseRun(POSE_T, 9);
-    this.presenter.update(POSE_T, { x: 1665, y: 1060, heightPx: 470, appear: 1, pose, yaw: -0.5 });
+    this.presenter.update(POSE_T, { x: 1380, y: 1000, heightPx: 430, appear: 1, pose: this.variant.pose(POSE_T), yaw: -0.45 });
   }
 
   drawOverlay(hud: Hud) {
-    const { ctx } = hud;
-
-    // Darken the top-left so the headline pops.
-    const shade = ctx.createLinearGradient(0, 0, 1100, 0);
-    shade.addColorStop(0, 'rgba(5, 8, 15, 0.85)');
-    shade.addColorStop(1, 'rgba(5, 8, 15, 0)');
-    ctx.fillStyle = shade;
-    ctx.fillRect(0, 0, 1100, 470);
-
-    hud.roundRect(80, 70, 360, 72, 36, CSS.edge);
-    hud.text('HOW A CDN WORKS', 260, 107, { size: 36, weight: 900, color: '#05080f', align: 'center' });
-    headline(ctx, "WHY IT'S", 80, 240, '#f1f5f9');
-    headline(ctx, 'FAST', 80, 390, CSS.healthy);
-
-    hud.label(this.origin.group.position, 'Origin · Virginia', { accent: CSS.storage, size: 40, below: true, offsetY: 70 });
-    hud.label(this.longTrip.curve.getPointAt(0.45), '6,700 km · ~100 ms', { accent: CSS.failure, size: 50, offsetY: 40 });
-    hud.label(this.shortTrip.curve.getPointAt(0.5), '400 km · ~10 ms', { accent: CSS.healthy, size: 50, offsetY: 150 });
+    const far = hud.project(this.longTrip.curve.getPointAt(0.45));
+    const near = hud.project(this.edge.group.position);
+    glow(hud, far.x, far.y, 520, CSS.failure, 0.4);
+    glow(hud, near.x, near.y, 360, CSS.healthy, 0.4);
+    vignette(hud);
+    drawHook(hud, this.variant);
+    // The hook in variant b already shows the numbers.
+    if (this.variant.id !== 'b') {
+      numberBadge(hud, far.x, far.y + 110, '~100 ms', CSS.failure);
+      numberBadge(hud, near.x + 40, near.y - 190, '~10 ms', CSS.healthy);
+    }
   }
 
   dispose() {
@@ -100,19 +123,4 @@ export class CdnThumbnail {
     this.map.dispose();
     this.presenter.dispose();
   }
-}
-
-function headline(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, color: string) {
-  ctx.save();
-  ctx.font = `900 150px ${FONTS.sans}`;
-  ctx.textBaseline = 'middle';
-  ctx.lineJoin = 'round';
-  ctx.lineWidth = 16;
-  ctx.strokeStyle = '#05080f';
-  ctx.strokeText(text, x, y);
-  ctx.fillStyle = color;
-  ctx.shadowColor = color;
-  ctx.shadowBlur = 24;
-  ctx.fillText(text, x, y);
-  ctx.restore();
 }

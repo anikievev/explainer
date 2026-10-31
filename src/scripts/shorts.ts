@@ -7,8 +7,9 @@
  *   npm run shorts -- --episode cdn --only cache-hit-vs-miss
  *
  * Needs the episode's 1080p render (npm run record) and voiceover .wav
- * (npm run voiceover). Writes one .mp4 per Short to output/renders/shorts/<episode>/
- * plus SHORTS.md with titles and descriptions ready to paste.
+ * (npm run voiceover). Writes one .mp4 per Short to output/renders/shorts/<episode>/,
+ * a clean cover frame per Short (-cover.png, hook + step pill, no captions) for
+ * use as its thumbnail, plus SHORTS.md with titles and descriptions ready to paste.
  */
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
@@ -61,8 +62,14 @@ const assTime = (s: number) => {
 const assColor = (hex: string) => `&H${hex.slice(5, 7)}${hex.slice(3, 5)}${hex.slice(1, 3)}&`.toUpperCase();
 const assText = (s: string) => s.replace(/[{}]/g, '').replace(/\n/g, '\\N');
 
-/** Title, part counter, captions and footer as an ASS subtitle script. */
-function buildAss(short: Short, index: number, duration: number): string {
+/** Video time of the Short's cover frame. */
+const coverTime = (short: Short) => short.cover ?? (short.beats?.length ? short.beats[0].at + 2 : short.start + 4);
+
+/**
+ * Title, step pills and captions as an ASS subtitle script. With `at`, builds a
+ * single still instead: the pill active at that time and no captions.
+ */
+function buildAss(short: Short, duration: number, at?: number): string {
   const end = assTime(duration);
   const captionY = CLIP_Y + CLIP_HEIGHT + 70;
   const events = [
@@ -71,12 +78,16 @@ function buildAss(short: Short, index: number, duration: number): string {
   ];
   const beats = short.beats ?? [];
   beats.forEach((beat, i) => {
-    const a = Math.max(0, beat.at - short.start);
-    const b = i + 1 < beats.length ? beats[i + 1].at - short.start : duration;
-    events.push(`Dialogue: 0,${assTime(a)},${assTime(b)},Beat,,0,0,0,,{\\an2\\pos(${WIDTH / 2},${CLIP_Y - 28})\\c${assColor(beat.color)}\\fad(150,0)}${assText(beat.text)}`);
+    let a = Math.max(0, beat.at - short.start);
+    let b = i + 1 < beats.length ? beats[i + 1].at - short.start : duration;
+    if (at !== undefined) {
+      if (at < beat.at || (i + 1 < beats.length && at >= beats[i + 1].at)) return;
+      [a, b] = [0, duration];
+    }
+    events.push(`Dialogue: 0,${assTime(a)},${assTime(b)},Beat,,0,0,0,,{\\an2\\pos(${WIDTH / 2},${CLIP_Y - 28})\\c${assColor(beat.color)}${at === undefined ? '\\fad(150,0)' : ''}}${assText(beat.text)}`);
   });
   for (const cue of CUES) {
-    if (cue.end <= short.start || cue.start >= short.end) continue;
+    if (at !== undefined || cue.end <= short.start || cue.start >= short.end) continue;
     const a = Math.max(0, cue.start - short.start);
     const b = Math.min(duration, cue.end - short.start);
     events.push(`Dialogue: 1,${assTime(a)},${assTime(b)},Caption,,0,0,0,,{\\an8\\pos(${WIDTH / 2},${captionY})\\fad(120,120)}${assText(cue.text)}`);
@@ -101,20 +112,28 @@ ${events.join('\n')}
 `;
 }
 
-async function renderShort(short: Short, index: number) {
-  const duration = short.end - short.start + TAIL;
-  if (duration > 60) throw new Error(`${short.slug} is ${duration.toFixed(1)} s; Shorts in this series stay under 60 s`);
-  const base = join(OUT_DIR, `${String(index + 1).padStart(2, '0')}-${short.slug}`);
-  const assFile = `${base}.ass`;
-  await writeFile(assFile, buildAss(short, index, duration));
-
-  const filter = [
+/** Blurred background + centred 16:9 clip + the ASS overlay, ending in [framed]. */
+function frameFilter(assFile: string) {
+  return [
     '[0:v]split[bgsrc][fgsrc]',
     `[bgsrc]scale=-2:${HEIGHT},crop=${WIDTH}:${HEIGHT},boxblur=28:2,eq=brightness=-0.22:saturation=1.2[bg]`,
     `[fgsrc]scale=${WIDTH}:${CLIP_HEIGHT}[fg]`,
     `[bg][fg]overlay=0:${CLIP_Y}[frame]`,
     // The .ass path sits inside the filter graph, so escape it for ffmpeg.
-    `[frame]ass='${assFile.replace(/\\/g, '/').replace(/'/g, "\\'").replace(/:/g, '\\:')}',fade=t=in:st=0:d=${FADE},fade=t=out:st=${(duration - FADE).toFixed(2)}:d=${FADE}[v]`,
+    `[frame]ass='${assFile.replace(/\\/g, '/').replace(/'/g, "\\'").replace(/:/g, '\\:')}'[framed]`,
+  ].join(';');
+}
+
+async function renderShort(short: Short, index: number) {
+  const duration = short.end - short.start + TAIL;
+  if (duration > 60) throw new Error(`${short.slug} is ${duration.toFixed(1)} s; Shorts in this series stay under 60 s`);
+  const base = join(OUT_DIR, `${String(index + 1).padStart(2, '0')}-${short.slug}`);
+  const assFile = `${base}.ass`;
+  await writeFile(assFile, buildAss(short, duration));
+
+  const filter = [
+    frameFilter(assFile),
+    `[framed]fade=t=in:st=0:d=${FADE},fade=t=out:st=${(duration - FADE).toFixed(2)}:d=${FADE}[v]`,
     `[1:a]afade=t=in:st=0:d=0.15,afade=t=out:st=${(duration - FADE).toFixed(2)}:d=${FADE}[a]`,
   ].join(';');
 
@@ -127,6 +146,15 @@ async function renderShort(short: Short, index: number) {
     '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', output,
   ]);
   console.log(`  ${output} (${duration.toFixed(1)} s)`);
+
+  // Cover: one clean frame (hook + current step pill, no captions) to use as the thumbnail.
+  const at = coverTime(short);
+  if (at < short.start || at >= short.end) throw new Error(`${short.slug}: cover ${at} s is outside the Short`);
+  const coverAss = `${base}-cover.ass`;
+  await writeFile(coverAss, buildAss(short, 1, at));
+  const cover = `${base}-cover.png`;
+  await ffmpeg(['-ss', String(at), '-i', inputVideo, '-filter_complex', frameFilter(coverAss), '-map', '[framed]', '-frames:v', '1', cover]);
+  console.log(`  ${cover}`);
 }
 
 function metadata(): string {
@@ -136,6 +164,8 @@ function metadata(): string {
     return `## ${i + 1}. ${s.hook}
 
 File: \`${String(i + 1).padStart(2, '0')}-${s.slug}.mp4\` · source ${s.start}–${s.end} s of the full video
+
+Thumbnail: \`${String(i + 1).padStart(2, '0')}-${s.slug}-cover.png\` (1080×1920). If Studio shows an upload button for Shorts thumbnails, upload it; otherwise pick the frame at **${(coverTime(s) - s.start).toFixed(1)} s** into the Short.
 
 Title:
 

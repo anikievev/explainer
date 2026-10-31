@@ -12,7 +12,7 @@
  */
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
@@ -65,6 +65,9 @@ const duration = async (file: string) =>
 
 const spoken = (i: number) => CUES[i].say ?? CUES[i].text;
 
+let clipNames: string[] | undefined;
+const cachedClips = () => (clipNames ??= readdirSync(CACHE_DIR).filter((n) => n.endsWith('.mp3')));
+
 async function synthesize(client: ElevenLabsClient, i: number): Promise<string> {
   const request = {
     text: spoken(i),
@@ -75,8 +78,12 @@ async function synthesize(client: ElevenLabsClient, i: number): Promise<string> 
     nextText: i < CUES.length - 1 ? spoken(i + 1) : undefined,
   };
   const key = createHash('sha1').update(JSON.stringify([VOICE_ID, request])).digest('hex').slice(0, 12);
-  const file = join(CACHE_DIR, `cue-${String(i).padStart(2, '0')}-${key}.mp3`);
+  // Keyed by content only, so inserting a line doesn't invalidate the ones after it.
+  // Older clips were named cue-<index>-<key>.mp3; reuse them too.
+  const file = join(CACHE_DIR, `clip-${key}.mp3`);
   if (existsSync(file)) return file;
+  const legacy = cachedClips().find((name) => name.endsWith(`-${key}.mp3`));
+  if (legacy) return join(CACHE_DIR, legacy);
 
   // 409: a library voice is being added to the account by a parallel request.
   let audio;
