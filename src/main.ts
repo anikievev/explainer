@@ -12,6 +12,8 @@ import { CdnThumbnail } from './scenes/cdn/Thumbnail.ts';
 import { LbThumbnail } from './scenes/load-balancer/Thumbnail.ts';
 import { MqScene } from './scenes/message-queue/MqScene.ts';
 import { MqThumbnail } from './scenes/message-queue/Thumbnail.ts';
+import { CacheScene } from './scenes/caching/CacheScene.ts';
+import { CacheThumbnail } from './scenes/caching/Thumbnail.ts';
 import { ChannelBanner } from './scenes/channel/ChannelBanner.ts';
 import { LbScene } from './scenes/load-balancer/LbScene.ts';
 import { DEFAULT_EPISODE } from './scenes/episodes.ts';
@@ -40,6 +42,10 @@ const SCENES: Record<string, { video(aspect: number, captions: boolean): Stage; 
   'message-queue': {
     video: (aspect, captions) => new MqScene(aspect, captions),
     thumbnail: (aspect, variant) => new MqThumbnail(aspect, variant),
+  },
+  caching: {
+    video: (aspect, captions) => new CacheScene(aspect, captions),
+    thumbnail: (aspect, variant) => new CacheThumbnail(aspect, variant),
   },
 };
 

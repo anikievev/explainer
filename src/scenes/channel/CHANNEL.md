@@ -39,8 +39,10 @@ Made for developers learning system design, including for interviews.
 Episodes so far:
 • How a CDN Works
 • How Load Balancers Work
+• How Message Queues Work
+• How Caching Works
 
-Next up: message queues. Subscribe to follow along.
+Next up: replication. Subscribe to follow along.
 
 Small packets. Big ideas.
 ```
@@ -78,12 +80,13 @@ System design building blocks, animated: how the systems behind websites and app
 1. How a CDN Works: why a site in Virginia loads fast in Berlin
 2. How Load Balancers Work: what happens when a server dies mid-sale
 3. How Message Queues Work: why your order is confirmed before anything happens
+4. How Caching Works: why one expired key can take the database down
 
 Each video takes one idea and shows it step by step, with real defaults from AWS and other tools labelled on screen.
 
 For developers learning system design, including for interviews.
 
-Next up: caching. New episodes are added here as they come out.
+Next up: replication. New episodes are added here as they come out.
 ```
 
 **Each upload:** add the new episode to the numbered list and update "Next up". Until episode 3 is live, remove line 3 or end it with "(coming soon)".

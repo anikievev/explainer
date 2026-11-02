@@ -11,6 +11,9 @@ import { SHORTS as CDN_SHORTS } from './cdn/shorts.ts';
 import { CUES as LB_CUES, DURATION as LB_DURATION } from './load-balancer/script.ts';
 import { SHORTS as LB_SHORTS } from './load-balancer/shorts.ts';
 import { CUES as MQ_CUES, DURATION as MQ_DURATION } from './message-queue/script.ts';
+import { SHORTS as MQ_SHORTS } from './message-queue/shorts.ts';
+import { CUES as CACHE_CUES, DURATION as CACHE_DURATION } from './caching/script.ts';
+import { SHORTS as CACHE_SHORTS } from './caching/shorts.ts';
 
 export interface Episode {
   id: string;
@@ -53,7 +56,17 @@ export const EPISODES: Record<string, Episode> = {
     kicker: 'HOW MESSAGE QUEUES WORK',
     duration: MQ_DURATION,
     cues: MQ_CUES,
-    shorts: [],
+    shorts: MQ_SHORTS,
+    autoTimed: true,
+  },
+  caching: {
+    id: 'caching',
+    slug: 'how-caching-works',
+    title: 'How Caching Works',
+    kicker: 'HOW CACHING WORKS',
+    duration: CACHE_DURATION,
+    cues: CACHE_CUES,
+    shorts: CACHE_SHORTS,
     autoTimed: true,
   },
 };

@@ -231,3 +231,22 @@ export function createDeadLetterBin(): NodeMesh {
   node.top.position.set(0, h + 0.1, 0);
   return node;
 }
+
+/** Cache: a squat in-memory box (light purple) with a glowing lightning strip and memory-chip ridges. */
+export function createCacheNode(): NodeMesh {
+  const node = new NodeMesh('cache');
+  const bodyMat = standard(0x4c3f7a, 0x2e2452, 0.6);
+  const chipMat = standard(0x1e293b, 0x000000, 0, { metalness: 0.5 });
+  const boltMat = standard(COLORS.storage, COLORS.storage, 2.2);
+  node.addStatusMaterial(boltMat);
+  node.addMesh(new THREE.BoxGeometry(0.9, 0.34, 0.6), bodyMat, [0, 0.17, 0]);
+  const ridge = new THREE.BoxGeometry(0.1, 0.06, 0.5);
+  for (let i = 0; i < 6; i++) node.addMesh(ridge, chipMat, [-0.34 + i * 0.136, 0.37, 0]);
+  // Lightning mark on the front: two slanted bars.
+  const bar = new THREE.BoxGeometry(0.05, 0.2, 0.02);
+  node.addMesh(bar, boltMat, [-0.02, 0.2, 0.305]).rotation.z = -0.5;
+  node.addMesh(bar, boltMat, [0.05, 0.14, 0.305]).rotation.z = -0.5;
+  node.addMesh(new THREE.BoxGeometry(0.5, 0.025, 0.02), boltMat, [0, 0.04, 0.305]);
+  node.top.position.set(0, 0.5, 0);
+  return node;
+}

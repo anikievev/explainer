@@ -95,7 +95,7 @@ Write these sections so each stands alone (hook line at the start, payoff at the
 | 4 | ~~Voiceover dry run, `npm run retime`~~ done: 6:13, no overruns | `how-message-queues-work-voiceover.wav` |
 | 5 | ~~Build components and scene~~ done: `QueueSim`, `LogTape`, `createQueueBroker/Worker/DeadLetterBin`, `Mascot.setOpacity`; `MqScene`, `MqStage`, `traffic.ts`, `beats.ts`, presenter | Stills reviewed in 2 passes |
 | 6 | ~~Full render, voiceover mux, captions~~ done: 4.7 min render | `how-message-queues-work-1080p-voiced.mp4`, `.srt` |
-| 7 | Thumbnail, Shorts, YouTube metadata, update `CHANNEL.md` episode list | `Thumbnail.ts`, `shorts.ts`, `YOUTUBE.md` |
+| 7 | ~~Thumbnail, Shorts, YouTube metadata, update `CHANNEL.md` episode list~~ done | `Thumbnail.ts`, `shorts.ts`, `YOUTUBE.md` |
 
 ## 6. Packaging (draft)
 
