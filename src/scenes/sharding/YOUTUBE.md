@@ -1,7 +1,7 @@
 # YouTube metadata — How Database Sharding Works
 
 Channel: **Data Packet** · *Small packets. Big ideas.*
-Files: `output/renders/how-database-sharding-works-1440p-voiced.mp4` (5:48, 2560×1440) · captions `output/renders/how-database-sharding-works.srt`
+Files: `output/renders/how-database-sharding-works-1440p-voiced.mp4` (5:45, 2560×1440) · captions `output/renders/how-database-sharding-works.srt`
 Shorts: `output/renders/shorts/sharding/` (4 clips + covers + `SHORTS.md`)
 
 ## Title
@@ -36,20 +36,20 @@ What you'll see:
 
 ⏱️ Chapters
 0:00 Black Friday: one primary takes every write
-0:35 Sharding: split one table across databases
-0:58 The router and the shard key
-1:15 Order 1042 finds its shard
-1:26 Shard key try 1: order date
-1:53 Try 2: hash the order ID
-2:11 Try 3: customer ID, and a good shard key
-2:33 Queries across shards: scatter-gather
-2:53 Transactions across shards
-3:11 The hot shard: one huge customer
-3:47 Fix: split the hot key
-4:05 Adding a shard: hash % N
-4:21 800 of 1,000 keys move
-4:34 Logical shards: Notion's 480
-5:07 Recap and what's next
+0:32 Sharding: split one table across databases
+0:55 The router and the shard key
+1:12 Order 1042 finds its shard
+1:23 Shard key try 1: order date
+1:50 Try 2: hash the order ID
+2:08 Try 3: customer ID, and a good shard key
+2:31 Queries across shards: scatter-gather
+2:50 Transactions across shards
+3:08 The hot shard: one huge customer
+3:44 Fix: split the hot key
+4:03 Adding a shard: hash % N
+4:18 800 of 1,000 keys move
+4:32 Logical shards: Notion's 480
+5:05 Recap and what's next
 
 📌 The facts in this video
 • MongoDB: the shard key value determines a document's distribution across shards; mongos routes queries and writes to shards
@@ -102,27 +102,27 @@ Same as episode 1 (`src/scenes/cdn/YOUTUBE.md`), except:
 ## Chapters check
 
 - First chapter at 0:00 ✓
-- 15 chapters, ascending, each ≥ 10 s ✓ (shortest: 1:15 → 1:26, 11 s)
+- 15 chapters, ascending, each ≥ 10 s ✓ (shortest: 1:12 → 1:23, 11 s)
 
-## End screen (5:30–5:48)
+## End screen (5:27–5:45)
 
-From 5:30 the scene dims behind a "NEXT VIDEO: Consistent hashing" card, the comment question appears below it, and the mascot waves on the right.
+From 5:27 the scene dims behind a "NEXT VIDEO: Consistent hashing" card, the comment question appears below it, and the mascot waves on the right.
 - **Element 1:** Video — "How Database Replication Works" (until the consistent hashing episode exists), bottom-left
 - **Element 2:** Subscribe button, bottom, left of center
-- Start both at 5:30. Keep the right third clear for the mascot.
+- Start both at 5:27. Keep the right third clear for the mascot.
 
 ## Cards
 
 | Time | Card |
 |---|---|
-| 0:07 | Video: "How Database Replication Works" (the narration calls back to it) |
-| 1:29 | Poll: "What do you shard by?" Customer / tenant ID · Hash of an ID · Date or time · We don't shard |
+| 0:09 | Video: "How Database Replication Works" ("Replicas copy everything": for viewers who want the replicas episode) |
+| 1:26 | Poll: "What do you shard by?" Customer / tenant ID · Hash of an ID · Date or time · We don't shard |
 
 ## Pinned comment
 
 ```
 Quick quiz 🧠 You shard with hash(key) % 4 and add a fifth shard. What share of your keys has to move?
-👇 (Answer at 4:21)
+👇 (Answer at 4:18)
 ```
 
 ## Thumbnail

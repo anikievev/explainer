@@ -17,9 +17,9 @@ const section = (index: string) => SECTIONS.find((s) => s.index === index)!.star
 export const B = {
   // Hook
   friday: at('Black Friday'),
-  onePrimary: at('Last episode, replicas took the reads'),
-  disks: at('And every replica holds the whole database'),
-  fix: at("Adding another replica won't help"),
+  onePrimary: at('And every write lands on one database server'),
+  disks: at('Replicas copy everything'),
+  fix: at("Another replica won't help"),
 
   // 1 · Split the data
   s1: section('1'),

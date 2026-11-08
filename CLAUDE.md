@@ -221,6 +221,7 @@ Use these repeatable formats:
 ### Video structure
 
 - **0–3 seconds:** Hook and visual establishment.
+- **No recap of the previous episode in the hook.** Open on this episode's problem from the first line ("Black Friday. Every order is a write."), not on "Last episode, …". A callback to an earlier episode can come later, in one short line, or as a card. (User request, Nov 2026.)
 - **End the hook with a promise (by about 0:25):** one line saying what the viewer will get, with the episode's most surprising payoff in it ("In six minutes: how to pick a shard key, why one shard can melt down, and why adding a database can move 80 percent of your data"). YouTube Studio's review (Nov 2026) flagged that our hooks showed the problem but never said what the viewer gains; caching lost most viewers in the first 30 s.
 - **3–15 seconds:** Introduce the system or problem.
 - **15–70% of runtime:** Explain step by step with animation.

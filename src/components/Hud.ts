@@ -167,16 +167,31 @@ export class Hud {
     const cy = this.height / 2 - 40;
     const { ctx } = this;
     ctx.save();
-    ctx.globalAlpha = alpha * 0.75;
-    const g = ctx.createRadialGradient(cx, cy, 50, cx, cy, 700);
-    g.addColorStop(0, 'rgba(5,8,15,0.85)');
-    g.addColorStop(1, 'rgba(5,8,15,0)');
-    ctx.fillStyle = g;
+    // Dim everything behind the title, then a solid band so no label or arc crosses the text.
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = 'rgba(5,8,15,0.62)';
     ctx.fillRect(0, 0, this.width, this.height);
+    const top = cy - 120;
+    const h = 250;
+    const band = ctx.createLinearGradient(0, 0, this.width, 0);
+    band.addColorStop(0, 'rgba(5,8,15,0)');
+    band.addColorStop(0.15, 'rgba(5,8,15,0.94)');
+    band.addColorStop(0.85, 'rgba(5,8,15,0.94)');
+    band.addColorStop(1, 'rgba(5,8,15,0)');
+    ctx.fillStyle = band;
+    ctx.fillRect(0, top, this.width, h);
+    const line = ctx.createLinearGradient(0, 0, this.width, 0);
+    line.addColorStop(0, 'rgba(34,211,238,0)');
+    line.addColorStop(0.5, 'rgba(34,211,238,0.8)');
+    line.addColorStop(1, 'rgba(34,211,238,0)');
+    ctx.fillStyle = line;
+    ctx.fillRect(0, top, this.width, 3);
+    ctx.fillRect(0, top + h - 3, this.width, 3);
     ctx.restore();
     this.text(title, cx, cy, { size: 104, weight: 800, align: 'center', alpha });
-    this.text(subtitle, cx, cy + 92, { size: 38, weight: 500, color: CSS.edge, align: 'center', alpha });
+    this.text(subtitle, cx, cy + 82, { size: 40, weight: 600, color: CSS.edge, align: 'center', alpha });
   }
+
 
   /** Section marker, top-left. */
   chip(index: string, text: string, alpha: number) {
