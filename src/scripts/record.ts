@@ -5,6 +5,7 @@
  *
  *   node src/scripts/record.ts                    # full 1080p video of the latest episode
  *   node src/scripts/record.ts --episode cdn      # a specific episode (see src/scenes/episodes.ts)
+ *   node src/scripts/record.ts --res 1440p        # 2560×1440, the upload render
  *   node src/scripts/record.ts --4k               # 3840×2160
  *   node src/scripts/record.ts --from 210 --to 240 --workers 4
  *   node src/scripts/record.ts --stills 2,60,150  # PNG stills only
@@ -24,6 +25,7 @@ import { createServer } from 'vite';
 import { toSrt } from '../components/Script.ts';
 import { VARIANTS } from '../components/ThumbnailKit.ts';
 import { getEpisode } from '../scenes/episodes.ts';
+import { RESOLUTIONS, type ResolutionName } from '../config/video-settings.ts';
 
 const ROOT = resolve(import.meta.dirname, '../..');
 const OUT_DIR = join(ROOT, 'output/renders');
@@ -31,6 +33,7 @@ const OUT_DIR = join(ROOT, 'output/renders');
 const { values: args } = parseArgs({
   options: {
     '4k': { type: 'boolean', default: false },
+    res: { type: 'string' },
     workers: { type: 'string', default: String(Math.max(1, Math.min(6, Math.floor(cpus().length / 2)))) },
     from: { type: 'string' },
     to: { type: 'string' },
@@ -46,7 +49,8 @@ const { values: args } = parseArgs({
 const episode = getEpisode(args.episode);
 const VIDEO_SLUG = episode.slug;
 
-const res = args['4k'] || args.thumbnail || args.banner ? '4k' : '1080p';
+const res: ResolutionName = args['4k'] || args.thumbnail || args.banner ? '4k' : ((args.res ?? '1080p') as ResolutionName);
+if (!(res in RESOLUTIONS)) throw new Error(`Unknown --res ${res}; use ${Object.keys(RESOLUTIONS).join(', ')}`);
 
 interface Explainer {
   width: number;
@@ -71,7 +75,8 @@ async function grabFrame(page: Page, frame: number): Promise<Buffer> {
 
 async function main() {
   await mkdir(OUT_DIR, { recursive: true });
-  const server = await createServer({ root: ROOT, logLevel: 'error', server: { port: 0 } });
+  // No HMR or file watching: a file change mid-render would reload the page and kill the run.
+  const server = await createServer({ root: ROOT, logLevel: 'error', server: { port: 0, hmr: false, watch: null } });
   await server.listen();
   const address = server.httpServer!.address();
   const port = typeof address === 'object' && address ? address.port : 5173;

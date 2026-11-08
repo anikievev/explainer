@@ -6,6 +6,8 @@ export interface VideoSettings {
 
 export const RESOLUTIONS = {
   '1080p': { width: 1920, height: 1080 },
+  /** Upload resolution: YouTube encodes 1440p+ uploads with a better codec and bitrate, so even 1080p playback looks sharper. */
+  '1440p': { width: 2560, height: 1440 },
   '4k': { width: 3840, height: 2160 },
 } as const;
 

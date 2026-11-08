@@ -14,6 +14,10 @@ import { MqScene } from './scenes/message-queue/MqScene.ts';
 import { MqThumbnail } from './scenes/message-queue/Thumbnail.ts';
 import { CacheScene } from './scenes/caching/CacheScene.ts';
 import { CacheThumbnail } from './scenes/caching/Thumbnail.ts';
+import { ReplicationScene } from './scenes/replication/ReplicationScene.ts';
+import { ReplicationThumbnail } from './scenes/replication/Thumbnail.ts';
+import { ShardingScene } from './scenes/sharding/ShardingScene.ts';
+import { ShardingThumbnail } from './scenes/sharding/Thumbnail.ts';
 import { ChannelBanner } from './scenes/channel/ChannelBanner.ts';
 import { LbScene } from './scenes/load-balancer/LbScene.ts';
 import { DEFAULT_EPISODE } from './scenes/episodes.ts';
@@ -46,6 +50,14 @@ const SCENES: Record<string, { video(aspect: number, captions: boolean): Stage; 
   caching: {
     video: (aspect, captions) => new CacheScene(aspect, captions),
     thumbnail: (aspect, variant) => new CacheThumbnail(aspect, variant),
+  },
+  replication: {
+    video: (aspect, captions) => new ReplicationScene(aspect, captions),
+    thumbnail: (aspect, variant) => new ReplicationThumbnail(aspect, variant),
+  },
+  sharding: {
+    video: (aspect, captions) => new ShardingScene(aspect, captions),
+    thumbnail: (aspect, variant) => new ShardingThumbnail(aspect, variant),
   },
 };
 

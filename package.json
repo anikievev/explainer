@@ -8,10 +8,12 @@
     "typecheck": "tsc --noEmit",
     "record": "node src/scripts/record.ts",
     "record:4k": "node src/scripts/record.ts --4k",
+    "record:1440p": "node src/scripts/record.ts --res 1440p",
     "voiceover": "node --env-file=.env.local src/scripts/voiceover.ts",
     "shorts": "node src/scripts/shorts.ts",
     "release": "npm run record && npm run voiceover && npm run shorts",
-    "retime": "node src/scripts/retime.ts"
+    "retime": "node src/scripts/retime.ts",
+    "sfx": "node --env-file=.env.local src/scripts/sfx.ts"
   },
   "dependencies": {
     "@elevenlabs/elevenlabs-js": "^2.74.0",

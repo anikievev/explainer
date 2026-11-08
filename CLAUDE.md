@@ -71,6 +71,7 @@ output/
   - One main object or system change
   - Optional labels or highlights
 - Do not add visual elements that do not reinforce the explanation.
+- **Mascot reactions:** match the emotion to the beat, not just surprise and cheer. Poses in `Mascot.ts`: `poseWorried` (something is about to break, sweat drop), `poseScared` (crash, outage), `poseSad` (data lost), `poseThinking` (trade-off, "something has to notice"), `poseShrug` ("it depends", a cost), `poseDetermined` (the fix), `poseNod`, `posePoint` ("watch this"), `poseSurprised`, `poseCheer`. Aim for a reaction every 10–20 s in the presenter's `REACTIONS`.
 
 ### Camera
 
@@ -112,7 +113,7 @@ camera.lookAt(0, 0, 0);
 
 ## Recording standards
 
-- Render resolution: 1920×1080 minimum; 3840×2160 preferred for final uploads.
+- Render resolution: work and review at 1920×1080; render the upload at **2560×1440** (`npm run record:1440p`, then `npm run voiceover`, which muxes onto the 1440p file when it exists). YouTube encodes 1440p+ uploads with a better codec and bitrate, so they look sharper even when watched at 1080p. 3840×2160 (`--4k`) is optional; it takes much longer to render.
 - Frame rate: 30 fps default; 60 fps only when motion clarity benefits from it.
 - Background: dark, clean, low-noise gradient or solid color.
 - Do not include browser UI, dev tools, cursors, or console output.
@@ -201,6 +202,18 @@ Use these repeatable formats:
 - Plain "X explained" searches are owned by big, older channels. Win on angle: prepare a "How X Works" title plus a myth or failure title (e.g. "Why Your Order Got Charged Twice", "Load Balancers Don't Work Like You Think") and test them.
 - Bare topic words are noisy in search ("kafka", "cdn"). Put "system design" in the tags and in the description's closing line.
 
+### Shorts
+
+- **The first second decides the Short.** In the first uploads (Oct 28 – Nov 2, 2026), 86–91% of Shorts-feed viewers swiped away, and each Short then got about one day of views. Viewers who stayed watched about a third, so the opening is the problem, not the length.
+- **Open on the problem or the payoff, never on setup.** A Short's first spoken line must be the strongest moment ("So shoppers see the wrong price", "Every request misses"), not context ("A server checks the cache first", "First: the thundering herd"). Use `open` in `shorts.ts` for a cold open (a cue or two of the payoff, then the explanation), or start the Short right on the surprise line.
+- **Drop list framing from the full video** ("First:", "Trap 2:", "Let's recap") from a Short's opening.
+- **Comparisons hold best:** "X vs Y" Shorts had the highest stay rate (L4 vs L7, queue vs Kafka). Make at least one comparison Short per episode when the script supports it.
+- **Prefer 30–45 s.** Keep every Short under 60 s; `npm run shorts` fails above that.
+- **Hashtags:** `#systemdesign` first, then the topic. Never `#cloudarchitecture`, and only tags that match the Short.
+- **Link back:** set each Short's "Related video" to its episode and pin a comment with the link; Shorts sent almost no viewers to the long videos.
+- **Sound accents (test, Nov 2026):** Shorts can mix quiet effects from `src/assets/sfx/` (`npm run sfx` generates them; set `beatSounds` and `sfx` in `shorts.ts`). Sharding Short #1 is the first with sound; compare its "Stayed to watch" with the silent ones before adding sound everywhere.
+- **After upload, check "Stayed to watch"** (viewed vs. swiped away) for each Short, and note it in the episode's `PLAN.md` results.
+
 ### After upload
 
 - Log results in the episode's `PLAN.md` under "Results" after 7 days: CTR, average view duration, where retention drops, and the one thing to improve in the next episode.
@@ -208,6 +221,7 @@ Use these repeatable formats:
 ### Video structure
 
 - **0–3 seconds:** Hook and visual establishment.
+- **End the hook with a promise (by about 0:25):** one line saying what the viewer will get, with the episode's most surprising payoff in it ("In six minutes: how to pick a shard key, why one shard can melt down, and why adding a database can move 80 percent of your data"). YouTube Studio's review (Nov 2026) flagged that our hooks showed the problem but never said what the viewer gains; caching lost most viewers in the first 30 s.
 - **3–15 seconds:** Introduce the system or problem.
 - **15–70% of runtime:** Explain step by step with animation.
 - **Final 15%:** Summarize the key takeaway.

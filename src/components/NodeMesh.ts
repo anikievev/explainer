@@ -12,6 +12,7 @@ export class NodeMesh {
   readonly top = new THREE.Object3D();
   private readonly disposables: Array<{ dispose(): void }> = [];
   private readonly statusMaterials: THREE.MeshStandardMaterial[] = [];
+  private readonly bodyMaterials: Array<{ mat: THREE.MeshStandardMaterial; color: THREE.Color; emissive: number }> = [];
   private baseScale = 1;
   private appearAmount = 1;
 
@@ -27,6 +28,20 @@ export class NodeMesh {
 
   addStatusMaterial(material: THREE.MeshStandardMaterial) {
     this.statusMaterials.push(material);
+  }
+
+  /** Register a body material that `setDim` darkens (a node that is down). */
+  addBodyMaterial(material: THREE.MeshStandardMaterial) {
+    this.bodyMaterials.push({ mat: material, color: material.color.clone(), emissive: material.emissiveIntensity });
+  }
+
+  /** 0 = normal, 1 = dark (powered off). */
+  setDim(k: number) {
+    const dark = new THREE.Color(0x1e293b);
+    for (const b of this.bodyMaterials) {
+      b.mat.color.copy(b.color).lerp(dark, k);
+      b.mat.emissiveIntensity = b.emissive * (1 - 0.9 * k);
+    }
   }
 
   addMesh(geometry: THREE.BufferGeometry, material: THREE.Material, position: THREE.Vector3Tuple = [0, 0, 0]) {
@@ -166,6 +181,7 @@ export function createLoadBalancer(): NodeMesh {
 export function createDatabase(color: number = COLORS.storage): NodeMesh {
   const node = new NodeMesh('database');
   const mat = standard(color, color, 0.6);
+  node.addBodyMaterial(mat);
   const geo = new THREE.CylinderGeometry(0.28, 0.28, 0.16, 32);
   for (let i = 0; i < 3; i++) node.addMesh(geo, mat, [0, 0.1 + i * 0.2, 0]);
   const ringMat = standard(COLORS.healthy, COLORS.healthy, 2.0);

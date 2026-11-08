@@ -2,6 +2,9 @@
  * Vertical Shorts cut from the full "How Caching Works" render. Times are
  * looked up from cue text (like beats.ts), so they follow `npm run retime`;
  * each Short starts and ends on a cue boundary and stays under 60 s.
+ *
+ * Every Short opens on its problem or payoff (`open`), never on setup: in the
+ * first uploads 86–91% of feed viewers swiped away within the first seconds.
  */
 import type { Short } from '../../components/Script.ts';
 import { CUES } from './script.ts';
@@ -15,6 +18,8 @@ function cue(fragment: string) {
 const from = (fragment: string) => cue(fragment).start - 0.3;
 const to = (fragment: string) => cue(fragment).end + 0.8;
 const at = (fragment: string) => cue(fragment).start;
+/** One or more whole cues, for a cold open. */
+const clip = (first: string, last = first) => ({ start: from(first), end: cue(last).end + 0.2 });
 
 const GREEN = '#34d399';
 const YELLOW = '#fbbf24';
@@ -25,6 +30,8 @@ const PURPLE = '#a78bfa';
 export const SHORTS: Short[] = [
   {
     slug: 'cache-hit-vs-miss',
+    // Open on the problem: the database drowning in identical questions.
+    open: clip('During a sale', 'What if we just remembered'),
     start: from('A server checks the cache first'),
     end: to('The more hits you get'),
     hook: 'The first visitor pays. Everyone after is instant.',
@@ -44,6 +51,8 @@ export const SHORTS: Short[] = [
   },
   {
     slug: 'your-cache-shows-the-wrong-price',
+    // Open on the payoff: the shopper sees the old price.
+    open: clip('So shoppers see the wrong price'),
     start: from("But there's a catch"),
     end: to('So when the price changes, you can delete'),
     hook: 'Your cache is showing the wrong price.',
@@ -62,14 +71,14 @@ export const SHORTS: Short[] = [
   },
   {
     slug: 'redis-doesnt-evict-by-default',
-    start: from('A cache lives in memory'),
+    // Start on the surprise itself; the full memory meter and OOM badge give the context.
+    start: from('By default, Redis evicts nothing'),
     end: to("Redis doesn't track that exactly"),
-    hook: "Redis doesn't evict anything by default.",
+    hook: 'Redis is full. Now writes fail.',
     // The rejected write: "✗ OOM · write rejected" over a full cache.
     cover: at('By default, Redis evicts nothing') + 2.5,
     beats: [
-      { at: at('A cache lives in memory'), text: 'Memory runs out', color: YELLOW },
-      { at: at('By default, Redis evicts nothing'), text: 'Default: noeviction', color: RED },
+        { at: at('By default, Redis evicts nothing'), text: 'Default: noeviction', color: RED },
       { at: at("That's why most teams pick an eviction policy"), text: 'Pick allkeys-lru', color: PURPLE },
       { at: at("Redis doesn't track that exactly"), text: 'LRU is approximated', color: PURPLE },
     ],
@@ -80,7 +89,9 @@ export const SHORTS: Short[] = [
   },
   {
     slug: 'one-key-expired-cache-stampede',
-    start: from('First: the thundering herd'),
+    // Open on the stampede, then show how it happened.
+    open: clip('In that moment, every request misses'),
+    start: from('Product 42 is the hottest key'),
     end: to('The fix is request coalescing'),
     hook: 'One key expired. Every request hit the database.',
     // The stampede: red requests slamming the database.

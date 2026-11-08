@@ -32,7 +32,7 @@ Paste into Settings → Channel → Basic info → Description (≈ 600 characte
 ```
 System design, animated. How the building blocks of big systems work, and how they fail.
 
-Follow Packet, a small data packet, through CDNs, load balancers, message queues, caches and more. Each video takes one idea, like "what happens when a server dies", and shows it step by step in 3D, with real defaults from AWS, NGINX and friends.
+Follow Packet, a small data packet, through CDNs, load balancers, message queues, caches, database replicas, shards and more. Each video takes one idea, like "what happens when a server dies", and shows it step by step in 3D, with real defaults from AWS, NGINX and friends.
 
 Made for developers learning system design, including for interviews.
 
@@ -41,8 +41,10 @@ Episodes so far:
 • How Load Balancers Work
 • How Message Queues Work
 • How Caching Works
+• How Database Replication Works
+• How Database Sharding Works
 
-Next up: replication. Subscribe to follow along.
+Next up: consistent hashing. Subscribe to follow along.
 
 Small packets. Big ideas.
 ```
@@ -81,12 +83,14 @@ System design building blocks, animated: how the systems behind websites and app
 2. How Load Balancers Work: what happens when a server dies mid-sale
 3. How Message Queues Work: why your order is confirmed before anything happens
 4. How Caching Works: why one expired key can take the database down
+5. How Database Replication Works: why a saved change can disappear
+6. How Database Sharding Works: why adding one database can move 80% of your data
 
 Each video takes one idea and shows it step by step, with real defaults from AWS and other tools labelled on screen.
 
 For developers learning system design, including for interviews.
 
-Next up: replication. New episodes are added here as they come out.
+Next up: consistent hashing. New episodes are added here as they come out.
 ```
 
 **Each upload:** add the new episode to the numbered list and update "Next up". Until episode 3 is live, remove line 3 or end it with "(coming soon)".

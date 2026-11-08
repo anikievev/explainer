@@ -1,3 +1,4 @@
+import type { SfxCue } from '../config/sfx.ts';
 /**
  * Narration and packaging types shared by every episode. Pure data, no
  * three.js, so Node scripts (voiceover, shorts, record) can import it too.
@@ -33,6 +34,12 @@ export interface Short {
   /** Video time range in seconds. */
   start: number;
   end: number;
+  /**
+   * Cold open: a few seconds of the payoff (video time range) played before
+   * `start`, so the first second already shows why to keep watching. Most
+   * feed viewers decide to swipe in that first second.
+   */
+  open?: { start: number; end: number };
   /** Big on-screen title, shown for the whole Short. */
   hook: string;
   /** YouTube title (≤ 100 characters, #Shorts added automatically). */
@@ -43,6 +50,12 @@ export interface Short {
   beats?: Beat[];
   /** Video time (s) of the cover frame, used as the Short's thumbnail. Default: 2 s into the first beat, else 4 s in. */
   cover?: number;
+  /**
+   * Sound accents (video times), mixed quietly under the narration. With
+   * `beatSounds`, every step-pill change also gets a pop and every cut a whoosh.
+   */
+  sfx?: SfxCue[];
+  beatSounds?: boolean;
 }
 
 export function findCue(cues: Cue[], t: number): Cue | undefined {

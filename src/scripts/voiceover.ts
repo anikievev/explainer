@@ -2,7 +2,7 @@
  * Voiceover: synthesizes every narration cue with ElevenLabs, fits each clip
  * into its cue slot, mixes them into one track and muxes it onto the render.
  *
- *   npm run voiceover                          # latest episode, muxed onto its 1080p render
+ *   npm run voiceover                          # latest episode, muxed onto its 1440p render (else 1080p)
  *   npm run voiceover -- --episode cdn
  *   npm run voiceover -- --input output/renders/how-a-cdn-works-4k.mp4
  *
@@ -46,7 +46,8 @@ const episode = getEpisode(args.episode);
 const VIDEO_SLUG = episode.slug;
 const CUES = episode.cues;
 const DURATION = episode.duration;
-const inputVideo = args.input ?? join(OUT_DIR, `${VIDEO_SLUG}-1080p.mp4`);
+// Mux onto the upload render (1440p) when it exists, else the 1080p working render.
+const inputVideo = args.input ?? [`${VIDEO_SLUG}-1440p.mp4`, `${VIDEO_SLUG}-1080p.mp4`].map((f) => join(OUT_DIR, f)).find((f) => existsSync(f)) ?? join(OUT_DIR, `${VIDEO_SLUG}-1080p.mp4`);
 
 function run(cmd: string, argv: string[]): Promise<string> {
   return new Promise((ok, fail) => {

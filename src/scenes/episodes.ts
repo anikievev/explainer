@@ -14,6 +14,10 @@ import { CUES as MQ_CUES, DURATION as MQ_DURATION } from './message-queue/script
 import { SHORTS as MQ_SHORTS } from './message-queue/shorts.ts';
 import { CUES as CACHE_CUES, DURATION as CACHE_DURATION } from './caching/script.ts';
 import { SHORTS as CACHE_SHORTS } from './caching/shorts.ts';
+import { CUES as REPL_CUES, DURATION as REPL_DURATION } from './replication/script.ts';
+import { SHORTS as REPL_SHORTS } from './replication/shorts.ts';
+import { CUES as SHARD_CUES, DURATION as SHARD_DURATION } from './sharding/script.ts';
+import { SHORTS as SHARD_SHORTS } from './sharding/shorts.ts';
 
 export interface Episode {
   id: string;
@@ -67,6 +71,26 @@ export const EPISODES: Record<string, Episode> = {
     duration: CACHE_DURATION,
     cues: CACHE_CUES,
     shorts: CACHE_SHORTS,
+    autoTimed: true,
+  },
+  replication: {
+    id: 'replication',
+    slug: 'how-database-replication-works',
+    title: 'How Database Replication Works',
+    kicker: 'HOW REPLICATION WORKS',
+    duration: REPL_DURATION,
+    cues: REPL_CUES,
+    shorts: REPL_SHORTS,
+    autoTimed: true,
+  },
+  sharding: {
+    id: 'sharding',
+    slug: 'how-database-sharding-works',
+    title: 'How Database Sharding Works',
+    kicker: 'HOW SHARDING WORKS',
+    duration: SHARD_DURATION,
+    cues: SHARD_CUES,
+    shorts: SHARD_SHORTS,
     autoTimed: true,
   },
 };
