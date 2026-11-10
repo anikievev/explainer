@@ -84,13 +84,18 @@ Sync or async: which would you pick for payments?`,
   {
     slug: 'split-brain-two-primaries',
     question: 'Have you ever ended up with two primaries?',
-    linkedin: `Failover worked. Then the old primary came back, and the database had two primaries.
+    // Opens on a documented incident (GitHub's own post-incident analysis, 30 Oct 2018):
+    // 43 s partition, failover to the West Coast, both data centres left holding writes
+    // the other didn't have, 24 h 11 min degraded. GitHub's wording, not "two primaries".
+    linkedin: `GitHub lost a network link for 43 seconds. Recovery took 24 hours and 11 minutes.
 
-The primary crashes, and a separate tool promotes a replica; PostgreSQL doesn't do that step itself. When the old primary comes back online, it still thinks it's the primary. Now two servers accept writes, and order 1042 gets one address on one and a different address on the other.
+October 21, 2018. Routine maintenance cut the link between GitHub's East Coast data centre and its network hub. Their MySQL tooling failed over to the West Coast. But the East Coast databases held writes that had never reached the West, and the West now had new writes of its own. Two sides, each with data the other didn't have.
 
-PostgreSQL's docs warn this leads to confusion and, ultimately, data loss. The fix has a blunt name: STONITH, "shoot the other node in the head". Fence the old primary out, so there is only ever one.
+GitHub chose data integrity over uptime: restore from backups, replay what could be replayed, and run degraded for a day. It's all in their post-incident analysis.
 
-Have you ever had to clean up after two primaries?`,
+The clip shows the classic version of the same trap, split brain: the old primary comes back online after failover, still thinks it's the primary, and two servers accept writes. PostgreSQL's docs warn this leads to confusion and, ultimately, data loss. The fix has a blunt name: STONITH, "shoot the other node in the head". Fence the old primary out, so there is only ever one.
+
+What does your failover do when the old primary comes back?`,
     // No cold open: "Now two servers accept writes" comes 6 s into the main clip,
     // so replaying it sounded like a glitch. The Short opens on the crash instead:
     // the main clip starts at "The old primary comes back", which needs the
