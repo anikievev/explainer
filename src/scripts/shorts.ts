@@ -30,6 +30,7 @@ import type { Short } from '../components/Script.ts';
 import { SFX, type SfxName } from '../config/sfx.ts';
 import { getEpisode } from '../scenes/episodes.ts';
 import { CACHE_DIR, synthesize } from './tts.ts';
+import { linkedinLabel } from '../config/linkedin.ts';
 
 const ROOT = resolve(import.meta.dirname, '../..');
 const RENDERS = join(ROOT, 'output/renders');
@@ -478,10 +479,11 @@ ${blocks.join('\n')}`;
  */
 function linkedinMetadata(): string {
   const blocks = SHORTS.map((s, i) => [s, i] as const).filter(([s]) => s.linkedin).map(([s, i]) => {
-    const post = [s.linkedin!.trim(), `Full ${episode.title} explainer in the first comment.`, s.hashtags.slice(0, 3).join(' ')].join('\n\n');
+    const label = linkedinLabel(episode.id, s.slug);
+    const post = [`${label}: ${s.linkedin!.trim()}`, `Full ${episode.title} explainer in the first comment.`, s.hashtags.slice(0, 3).join(' ')].join('\n\n');
     if (post.length > 3000) throw new Error(`LinkedIn post too long for ${s.slug}: ${post.length} characters`);
     const file = `${String(i + 1).padStart(2, '0')}-${s.slug}`;
-    return `## ${i + 1}. ${s.hook}
+    return `## ${label}: ${s.hook}
 
 File: \`${file}.mp4\` (1080×1350) · Thumbnail: \`${file}-cover.png\`
 
