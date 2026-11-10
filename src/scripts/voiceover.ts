@@ -11,21 +11,15 @@
  * (loaded from .env.local by the npm script).
  */
 import { spawn } from 'node:child_process';
-import { createHash } from 'node:crypto';
-import { existsSync, readdirSync } from 'node:fs';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { mkdir } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
-import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
 import { getEpisode } from '../scenes/episodes.ts';
+import { CACHE_DIR, describeVoice, synthesize as synthesizeLine } from './tts.ts';
 
 const ROOT = resolve(import.meta.dirname, '../..');
 const OUT_DIR = join(ROOT, 'output/renders');
-const CACHE_DIR = join(OUT_DIR, 'voiceover-cache');
-
-const VOICE_ID = 'Gfpl8Yo74Is0W6cPUWWT';
-const MODEL_ID = 'eleven_v4';
-const VOICE_SETTINGS = { stability: 0.5, similarityBoost: 0.75 };
 /** Silence before each line, and the gap kept before the next cue starts. */
 const LEAD_IN = 0.12;
 const TAIL_GAP = 0.2;
@@ -66,41 +60,11 @@ const duration = async (file: string) =>
 
 const spoken = (i: number) => CUES[i].say ?? CUES[i].text;
 
-let clipNames: string[] | undefined;
-const cachedClips = () => (clipNames ??= readdirSync(CACHE_DIR).filter((n) => n.endsWith('.mp3')));
-
-async function synthesize(client: ElevenLabsClient, i: number): Promise<string> {
-  const request = {
-    text: spoken(i),
-    modelId: MODEL_ID,
-    outputFormat: 'mp3_44100_128' as const,
-    voiceSettings: VOICE_SETTINGS,
+const synthesize = (i: number) =>
+  synthesizeLine(spoken(i), {
     previousText: i > 0 ? spoken(i - 1) : undefined,
     nextText: i < CUES.length - 1 ? spoken(i + 1) : undefined,
-  };
-  const key = createHash('sha1').update(JSON.stringify([VOICE_ID, request])).digest('hex').slice(0, 12);
-  // Keyed by content only, so inserting a line doesn't invalidate the ones after it.
-  // Older clips were named cue-<index>-<key>.mp3; reuse them too.
-  const file = join(CACHE_DIR, `clip-${key}.mp3`);
-  if (existsSync(file)) return file;
-  const legacy = cachedClips().find((name) => name.endsWith(`-${key}.mp3`));
-  if (legacy) return join(CACHE_DIR, legacy);
-
-  // 409: a library voice is being added to the account by a parallel request.
-  let audio;
-  for (let attempt = 0; ; attempt++) {
-    try {
-      audio = await client.textToSpeech.convert(VOICE_ID, request);
-      break;
-    } catch (err) {
-      const status = (err as { statusCode?: number }).statusCode;
-      if (attempt >= 5 || (status !== 409 && status !== 429)) throw err;
-      await new Promise((ok) => setTimeout(ok, 2000 * (attempt + 1)));
-    }
-  }
-  await writeFile(file, Buffer.from(await new Response(audio).arrayBuffer()));
-  return file;
-}
+  });
 
 /** Trims leading/trailing silence and speeds the clip up if it overruns its slot. */
 async function fit(i: number, source: string) {
@@ -118,16 +82,15 @@ async function fit(i: number, source: string) {
 
 async function main() {
   await mkdir(CACHE_DIR, { recursive: true });
-  const client = new ElevenLabsClient();
 
-  console.log(`Synthesizing ${CUES.length} cues with voice ${VOICE_ID} (${MODEL_ID})`);
+  console.log(`Synthesizing ${CUES.length} cues with ${describeVoice()}`);
   const clips: string[] = new Array(CUES.length);
   let next = 0;
   await Promise.all(
     Array.from({ length: CONCURRENCY }, async () => {
       while (next < CUES.length) {
         const i = next++;
-        clips[i] = await synthesize(client, i);
+        clips[i] = await synthesize(i);
         process.stdout.write('.');
       }
     }),

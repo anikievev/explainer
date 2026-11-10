@@ -55,16 +55,23 @@ export const SHORTS: Short[] = [
   {
     slug: 'sync-vs-async-replication',
     question: 'Sync or async: which would you pick for payments?',
-    // Open on the crash: a confirmed save that never reached a replica.
-    open: clip('If the primary crashes before'),
-    start: from('With asynchronous replication, the primary confirms'),
+    linkedin: `The database said "saved". Then the primary crashed, and the save was gone.
+
+With asynchronous replication, the primary confirms a write before the replicas have it. If it crashes in that window, changes the user already saw as saved are lost. The more replication lag, the more you lose.
+
+Synchronous replication waits until a replica confirms each write. Nothing confirmed is lost, but every write waits at least one extra round trip. PostgreSQL has a synchronous mode, and MySQL offers a semi-synchronous one.
+
+Sync or async: which would you pick for payments?`,
+    // Start right on the crash: a confirmed save that never reached a replica.
+    // No cold open: the async setup line sits only one line before the crash, so a
+    // cold open replayed the crash line 6 s later. The pill names async instead.
+    start: from('If the primary crashes before'),
     end: to('Then the replica already has every confirmed save'),
     hook: 'Async vs sync replication: which one loses data?',
     // The async crash: CRASH badge and the "saved, then lost" counter.
     cover: at('If the primary crashes before') + 4,
     beats: [
-      { at: at('With asynchronous replication, the primary confirms'), text: 'Async: confirm first, copy later', color: YELLOW },
-      { at: at('If the primary crashes before'), text: 'Crash = confirmed saves lost', color: RED },
+      { at: at('If the primary crashes before'), text: 'Async: crash = confirmed saves lost', color: RED },
       { at: at('The more lag, the more you lose'), text: 'More lag, more loss', color: RED },
       { at: at('With synchronous replication'), text: 'Sync: wait for a replica', color: GREEN },
       { at: at('Then the replica already has every confirmed save'), text: 'Safe, but +1 round trip', color: BLUE },
@@ -77,8 +84,18 @@ export const SHORTS: Short[] = [
   {
     slug: 'split-brain-two-primaries',
     question: 'Have you ever ended up with two primaries?',
-    // Open on two primaries holding two different addresses for one order.
-    open: clip('Now two servers accept writes'),
+    linkedin: `Failover worked. Then the old primary came back, and the database had two primaries.
+
+The primary crashes, and a separate tool promotes a replica; PostgreSQL doesn't do that step itself. When the old primary comes back online, it still thinks it's the primary. Now two servers accept writes, and order 1042 gets one address on one and a different address on the other.
+
+PostgreSQL's docs warn this leads to confusion and, ultimately, data loss. The fix has a blunt name: STONITH, "shoot the other node in the head". Fence the old primary out, so there is only ever one.
+
+Have you ever had to clean up after two primaries?`,
+    // No cold open: "Now two servers accept writes" comes 6 s into the main clip,
+    // so replaying it sounded like a glitch. The Short opens on the crash instead:
+    // the main clip starts at "The old primary comes back", which needs the
+    // failover the Short cuts out; this line restores it over the failover footage.
+    intro: { say: 'Your primary database crashes, and a replica is promoted to take its place.', at: at('Now, the primary dies') },
     start: from('The old primary comes back online'),
     end: to('Make sure the old primary is shut out'),
     hook: 'Two primaries. One order. Two addresses.',
@@ -100,8 +117,9 @@ export const SHORTS: Short[] = [
     slug: 'read-replicas-are-read-only',
     question: 'Do your reads go to replicas, or does the primary take everything?',
     // Open on the bounce: an update sent to a replica fails ("✗ read-only").
-    open: clip('In PostgreSQL, those connections are strictly read-only'),
-    start: from('Replicas are read-only'),
+    // Starts on "Replicas are read-only" so "those connections" has something to point at.
+    open: clip('Replicas are read-only', 'In PostgreSQL, those connections are strictly read-only'),
+    start: from('So the app sends writes to the primary'),
     end: to('Need more reads? Add another replica'),
     hook: 'Send a write to a replica. It bounces.',
     // The write bouncing off a replica: "✗ read-only".

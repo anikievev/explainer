@@ -15,6 +15,8 @@ function cue(fragment: string) {
 const from = (fragment: string) => cue(fragment).start - 0.3;
 const to = (fragment: string) => cue(fragment).end + 0.8;
 const at = (fragment: string) => cue(fragment).start;
+/** One or more whole cues, for a cold open. */
+const clip = (first: string, last = first) => ({ start: from(first), end: cue(last).end + 0.2 });
 
 const GREEN = '#34d399';
 const YELLOW = '#fbbf24';
@@ -24,14 +26,15 @@ const BLUE = '#38bdf8';
 export const SHORTS: Short[] = [
   {
     slug: 'what-happens-when-a-server-dies',
-    start: from('But what if one of those servers breaks'),
+    // Open on the payoff; "But what if one of those servers breaks?" needs the pool from earlier.
+    open: clip('The shop stays open while one server is down'),
+    start: from('The load balancer keeps checking'),
     end: to('One surprise'),
     hook: 'A server just died. Users kept shopping.',
     // "✗ 2 → UNHEALTHY" on server 2, traffic going around it.
     cover: at('From then on, it gets no new requests') + 0.8,
     beats: [
-      { at: at('But what if one of those servers breaks'), text: 'Server 2 breaks', color: RED },
-      { at: at('The load balancer keeps checking'), text: 'Health checks', color: GREEN },
+      { at: at('The load balancer keeps checking'), text: 'Server 2 breaks · health checks', color: RED },
       { at: at('From then on, it gets no new requests'), text: 'No traffic to it', color: YELLOW },
       { at: at('When the server recovers'), text: 'Back in the pool', color: GREEN },
       { at: at('One surprise'), text: 'Surprise: fail open', color: RED },
@@ -78,7 +81,15 @@ export const SHORTS: Short[] = [
   },
   {
     slug: 'why-sticky-sessions-hurt',
-    start: from('First, sticky sessions'),
+    linkedin: `Sticky sessions look like an easy fix until the server dies and takes every pinned user's cart with it.
+
+Some apps keep the shopping cart in one server's memory, so the load balancer pins each user to that server with a cookie (on AWS, AWSALB). Pinned users can pile up on one server, and when it dies, their carts are gone.
+
+The usual fix is to keep sessions outside the servers, in a shared store. Then any server can take any request, and losing one server loses no carts.
+
+Where do your sessions live?`,
+    // Start on "a few traps" so "First, sticky sessions" isn't the first word heard.
+    start: from('Load balancing has a few traps'),
     end: to('The usual fix is to keep sessions outside'),
     hook: 'Why sticky sessions hurt',
     // "CARTS LOST" on the pinned server.

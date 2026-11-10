@@ -32,6 +32,13 @@ export const SHORTS: Short[] = [
   {
     slug: 'add-one-server-move-80-percent',
     question: 'Logical shards or consistent hashing: which would you use?',
+    linkedin: `Add one database to a sharded cluster, and 80% of your data has to move.
+
+A simple way to pick a shard is hash(key) % N. Go from four shards to five, and the answer changes for most keys: 800 of every 1,000 keys now belong on a different shard, and they move while the shop is still running.
+
+One way out is to create many small logical shards up front and put several on each machine. Notion runs 480 logical shards on 32 databases. To grow, whole shards move to new machines, and no key changes its shard. Consistent hashing is the other common answer.
+
+Logical shards or consistent hashing: which would you use?`,
     // Open on the payoff: 800 of 1,000 keys flying to new shards.
     open: clip('Here are a thousand keys'),
     start: from("Sooner or later, four shards aren't enough"),
@@ -62,14 +69,23 @@ export const SHORTS: Short[] = [
   {
     slug: 'never-shard-by-timestamp',
     question: 'What would you pick as the shard key for your app?',
+    linkedin: `Shard by date, and one database takes every write.
+
+Every new order has today's date, so every new write lands on the last shard while the others sit idle. MongoDB's docs warn about this: with an always-increasing shard key, one shard becomes the write bottleneck.
+
+Hashing the order ID spreads writes evenly. The cost: asking for one customer's orders now means asking every shard. Sharding by customer ID keeps each customer's orders together and still spreads customers across shards. Notion shards its data the same way, by workspace.
+
+What would you pick as the shard key for your app?`,
     // Open on the problem: one red shard taking every write.
     open: clip("But every new order has today's date"),
-    start: from('First try: the order date'),
+    // Start on what a shard key does, so "First try" reads as the first of the tries, not list framing.
+    start: from('Order 1042 belongs to customer 7'),
     end: to('Second try: hash the order ID'),
     hook: 'Shard by date, and one shard takes every write.',
     // The "ALL WRITES" badge over the last shard, its bar maxed out.
     cover: at("But every new order has today's date") + 4,
     beats: [
+      { at: at('Order 1042 belongs to customer 7'), text: 'The shard key picks the shard', color: PURPLE },
       { at: at('First try: the order date'), text: 'Shard key: order date', color: BLUE },
       { at: at("But every new order has today's date"), text: 'Every write → last shard', color: RED },
       { at: at("MongoDB's docs warn about this"), text: 'Always increasing = hot shard', color: RED },
@@ -83,20 +99,22 @@ export const SHORTS: Short[] = [
   {
     slug: 'sharding-vs-replication',
     question: 'Do you need sharding yet, or are replicas enough?',
-    // Open on the comparison itself.
-    open: clip('Compare that with replicas'),
-    start: from('So the writes split up too'),
-    end: to('Order 1042 belongs to customer 7'),
+    // Open on the problem replicas can't solve: every copy is just as full.
+    open: clip('Replicas copy everything', "Another replica won't help"),
+    // Start on what sharding is, so "Compare that with replicas" has something to compare.
+    start: from('Sharding splits one table across several databases'),
+    end: to('In MongoDB, that router is called mongos'),
     hook: 'Replication vs sharding: what is the difference?',
     // The replicas-vs-shards panel.
     cover: at('Compare that with replicas') + 3.5,
     beats: [
+      { at: at('Sharding splits one table across several databases'), text: 'Shards: different slices', color: PURPLE },
+      { at: at('Compare that with replicas'), text: 'Replicas: same data', color: BLUE },
       { at: at('So the writes split up too'), text: 'Writes split across shards', color: GREEN },
       { at: at('But how does a row find its shard'), text: 'Router + shard key', color: BLUE },
       { at: at('In MongoDB, that router is called mongos'), text: 'mongos · VTGate', color: BLUE },
-      { at: at('Order 1042 belongs to customer 7'), text: 'customer 7 → shard 3', color: PURPLE },
     ],
-    title: 'Sharding vs. replication in 40 seconds',
+    title: 'Sharding vs. replication in under a minute',
     description:
       'Every replica holds the same data. Shards hold different data, so the writes split up too. A router reads one field of each row, the shard key, and picks the shard. In MongoDB the router is mongos; Vitess, for MySQL, has VTGate.',
     hashtags: ['#systemdesign', '#database', '#sharding'],
@@ -104,15 +122,17 @@ export const SHORTS: Short[] = [
   {
     slug: 'why-notion-picked-480-shards',
     question: 'How many shards would you start with?',
-    // Open on the surprising number.
-    open: clip('They picked 480 because'),
-    start: from("That's 80 percent of the data on the move"),
-    end: to('Notion runs 480 logical shards'),
+    // Open on the surprising number ("They picked 480" alone dangles, so the full line).
+    open: clip('Notion runs 480 logical shards'),
+    // Start on the 4 → 5 problem itself, not on "That's 80 percent".
+    start: from('Go from four shards to five'),
+    end: to('They picked 480 because'),
     hook: 'Why Notion runs exactly 480 shards.',
     // 480 small boxes moving to the new databases.
     cover: at('Notion runs 480 logical shards') + 7,
     beats: [
-      { at: at("That's 80 percent of the data on the move"), text: 'Resharding moves data', color: RED },
+      { at: at('Go from four shards to five'), text: '% 4 → % 5', color: YELLOW },
+      { at: at('Here are a thousand keys'), text: 'Resharding moves data', color: RED },
       { at: at('One way out: create many small shards'), text: 'Many small logical shards', color: PURPLE },
       { at: at('Notion runs 480 logical shards'), text: '480 shards · 32 databases', color: GREEN },
     ],

@@ -40,6 +40,13 @@ export interface Short {
    * feed viewers decide to swipe in that first second.
    */
   open?: { start: number; end: number };
+  /**
+   * A line spoken only in the Short (synthesized with the episode voice),
+   * played after the cold open and before the main clip, over footage from
+   * video time `at`. Use it when the main clip leans on setup the Short cuts
+   * out ("The old primary comes back" needs "the primary died first").
+   */
+  intro?: { say: string; at: number };
   /** Big on-screen title, shown for the whole Short. */
   hook: string;
   /** YouTube title (≤ 100 characters, #Shorts added automatically). */
@@ -48,6 +55,13 @@ export interface Short {
   hashtags: string[];
   /** Comment prompt for the Instagram caption, specific to this clip. */
   question?: string;
+  /**
+   * LinkedIn post body. Only Shorts with one are cut for LinkedIn (`--linkedin`):
+   * the failure and trade-off clips, never "what is X". Lead with the failure,
+   * explain in short paragraphs, end with a question. Every claim must be in the
+   * episode script. The link line and hashtags are added automatically.
+   */
+  linkedin?: string;
   /** Optional step pill under the title (list progress, HIT → MISS). */
   beats?: Beat[];
   /** Video time (s) of the cover frame, used as the Short's thumbnail. Default: 2 s into the first beat, else 4 s in. */

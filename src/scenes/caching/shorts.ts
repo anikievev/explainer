@@ -74,6 +74,13 @@ export const SHORTS: Short[] = [
   {
     slug: 'redis-doesnt-evict-by-default',
     question: 'Which maxmemory-policy does your Redis run with?',
+    linkedin: `What does Redis do when it runs out of memory? By default, it stops taking writes.
+
+The default eviction policy is noeviction. When Redis reaches its memory limit, new writes fail with an error while reads keep working. If your app treats the cache as optional, check what it does when a cache write fails.
+
+Most teams set a policy such as allkeys-lru, which removes the key nobody has asked for in the longest time. Redis approximates it: it samples a few keys and evicts the one idle the longest.
+
+Which maxmemory-policy does your Redis run with?`,
     // Start on the surprise itself; the full memory meter and OOM badge give the context.
     start: from('By default, Redis evicts nothing'),
     end: to("Redis doesn't track that exactly"),
@@ -93,8 +100,15 @@ export const SHORTS: Short[] = [
   {
     slug: 'one-key-expired-cache-stampede',
     question: 'Ever had one expired key flood your database?',
-    // Open on the stampede, then show how it happened.
-    open: clip('In that moment, every request misses'),
+    linkedin: `One expired key can send all your traffic to the database at once.
+
+Product 42 is the hottest key in the shop. Its TTL runs out, and in that moment every request misses the cache. They all hit the database together. That's a cache stampede, also called a thundering herd.
+
+The fix is request coalescing: one request reloads the key from the database, and the others wait for its answer.
+
+How do you protect your hottest keys?`,
+    // Start on the trigger; the stampede follows 6 s in. A cold open of the
+    // stampede replayed the same line 6 s into the main clip, which sounded like a glitch.
     start: from('Product 42 is the hottest key'),
     end: to('The fix is request coalescing'),
     hook: 'One key expired. Every request hit the database.',
