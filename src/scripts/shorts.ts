@@ -10,6 +10,14 @@
  * (npm run voiceover). Writes one .mp4 per Short to output/renders/shorts/<episode>/,
  * a clean cover frame per Short (-cover.png, hook + step pill, no captions) for
  * use as its thumbnail, plus SHORTS.md with titles and descriptions ready to paste.
+ *
+ *   npm run shorts -- --episode sharding --instagram
+ *
+ * --instagram cuts the same clips as Instagram Reels into
+ * output/renders/shorts/<episode>/instagram/, with a layout that clears
+ * Instagram's overlays (top bar, right-side buttons): kicker and title moved
+ * down, captions in a narrower box. Writes REELS.md with captions to paste.
+ * --notes-only rewrites SHORTS.md / REELS.md without cutting the videos again.
  */
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
@@ -40,12 +48,23 @@ const { values: args } = parseArgs({
     video: { type: 'string' },
     audio: { type: 'string' },
     only: { type: 'string' },
+    instagram: { type: 'boolean', default: false },
+    'notes-only': { type: 'boolean', default: false },
   },
 });
 
+/**
+ * Text placement per platform. Instagram draws a taller top bar and a column of
+ * buttons along the right edge (x ≈ 960–1080) over the lower half, so Reels move
+ * the kicker and title down and keep captions inside x 160–920.
+ */
+const LAYOUT = args.instagram
+  ? { kickerY: 270, titleY: 335, captionMargin: 160, titleMargin: 100 }
+  : { kickerY: 230, titleY: 295, captionMargin: 90, titleMargin: 80 };
+
 const episode = getEpisode(args.episode);
 const { cues: CUES, shorts: SHORTS } = episode;
-const OUT_DIR = join(RENDERS, 'shorts', episode.id);
+const OUT_DIR = join(RENDERS, 'shorts', episode.id, ...(args.instagram ? ['instagram'] : []));
 // Any render works (the clip is scaled to 1080 wide); prefer 1080p, else the 1440p upload render.
 const inputVideo = args.video ?? [`${episode.slug}-1080p.mp4`, `${episode.slug}-1440p.mp4`].map((f) => join(RENDERS, f)).find((f) => existsSync(f)) ?? join(RENDERS, `${episode.slug}-1080p.mp4`);
 const inputAudio = args.audio ?? join(RENDERS, `${episode.slug}-voiceover.wav`);
@@ -112,8 +131,8 @@ function buildAss(short: Short, duration: number, at?: number): string {
   const end = assTime(duration);
   const captionY = CLIP_Y + CLIP_HEIGHT + 70;
   const events = [
-    `Dialogue: 0,0:00:00.00,${end},Kicker,,0,0,0,,{\\an8\\pos(${WIDTH / 2},230)}${assText(episode.kicker)}`,
-    `Dialogue: 0,0:00:00.00,${end},Title,,0,0,0,,{\\an8\\pos(${WIDTH / 2},295)}${assText(short.hook)}`,
+    `Dialogue: 0,0:00:00.00,${end},Kicker,,0,0,0,,{\\an8\\pos(${WIDTH / 2},${LAYOUT.kickerY})}${assText(episode.kicker)}`,
+    `Dialogue: 0,0:00:00.00,${end},Title,,0,0,0,,{\\an8\\pos(${WIDTH / 2},${LAYOUT.titleY})}${assText(short.hook)}`,
   ];
   const beats = short.beats ?? [];
   const beatLine = (a: number, b: number, beat: (typeof beats)[number], fade: boolean) =>
@@ -150,8 +169,8 @@ ScaledBorderAndShadow: yes
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
 Style: Kicker,${FONT},40,&H00EED322,&H00FFFFFF,&H000F0805,&H00000000,1,0,0,0,100,100,2,0,1,3,0,8,80,80,0,1
-Style: Title,${FONT},78,&H00F9F5F1,&H00FFFFFF,&H000F0805,&H00000000,1,0,0,0,100,100,0,0,1,6,0,8,80,80,0,1
-Style: Caption,${FONT},62,&H00FFFFFF,&H00FFFFFF,&H000F0805,&H00000000,1,0,0,0,100,100,0,0,1,6,0,8,90,90,0,1
+Style: Title,${FONT},78,&H00F9F5F1,&H00FFFFFF,&H000F0805,&H00000000,1,0,0,0,100,100,0,0,1,6,0,8,${LAYOUT.titleMargin},${LAYOUT.titleMargin},0,1
+Style: Caption,${FONT},62,&H00FFFFFF,&H00FFFFFF,&H000F0805,&H00000000,1,0,0,0,100,100,0,0,1,6,0,8,${LAYOUT.captionMargin},${LAYOUT.captionMargin},0,1
 Style: Beat,${FONT},48,&H00FFFFFF,&H00FFFFFF,&H00200F0A,&H00200F0A,1,0,0,0,100,100,1,0,3,14,0,2,80,80,0,1
 
 [Events]
@@ -295,16 +314,45 @@ Upload each Short after the full video is live, then replace \`[link to "${episo
 ${blocks.join('\n')}`;
 }
 
+/** Saves weigh heavily in Instagram's ranking, so every Reel asks for one. */
+const REEL_SAVE_LINE = 'Save this for your next system design interview.';
+
+/** Instagram Reels: no titles or related video, so one caption per Reel and a bio link. */
+function reelsMetadata(): string {
+  const blocks = SHORTS.map((s, i) => {
+    const ask = [REEL_SAVE_LINE, s.question ? `${s.question} 👇` : ''].filter(Boolean).join('\n');
+    const caption = `${s.hook}\n\n${s.description}\n\n${ask}\n\nFull video: link in bio (Data Packet on YouTube)\n\n${s.hashtags.slice(0, 5).join(' ')}`;
+    if (caption.length > 2200) throw new Error(`Reel caption too long for ${s.slug}: ${caption.length} characters`);
+    const file = `${String(i + 1).padStart(2, '0')}-${s.slug}`;
+    return `## ${i + 1}. ${s.hook}
+
+File: \`${file}.mp4\` · Cover: \`${file}-cover.png\` (upload it as the cover; the profile grid shows its middle 3:4)
+
+Caption:
+
+\`\`\`
+${caption}
+\`\`\`
+`;
+  });
+  return `# Instagram Reels: ${episode.title}
+
+Same clips as the YouTube Shorts, laid out to clear Instagram's overlays. Put the full video's YouTube link in the bio before posting.
+
+${blocks.join('\n')}`;
+}
+
 async function main() {
   for (const file of [inputVideo, inputAudio]) {
     if (!existsSync(file)) throw new Error(`Missing ${file}. Run npm run record and npm run voiceover first.`);
   }
   await mkdir(OUT_DIR, { recursive: true });
   const selected = SHORTS.map((s, i) => [s, i] as const).filter(([s]) => !args.only || args.only.split(',').includes(s.slug));
-  console.log(`Cutting ${selected.length} Shorts`);
-  for (const [short, index] of selected) await renderShort(short, index);
-  await writeFile(join(OUT_DIR, 'SHORTS.md'), metadata());
-  console.log(`  ${join(OUT_DIR, 'SHORTS.md')}`);
+  if (!args['notes-only']) console.log(`Cutting ${selected.length} Shorts`);
+  if (!args['notes-only']) for (const [short, index] of selected) await renderShort(short, index);
+  const notes = args.instagram ? 'REELS.md' : 'SHORTS.md';
+  await writeFile(join(OUT_DIR, notes), args.instagram ? reelsMetadata() : metadata());
+  console.log(`  ${join(OUT_DIR, notes)}`);
 }
 
 await main();

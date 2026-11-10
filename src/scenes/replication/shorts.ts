@@ -32,6 +32,7 @@ const PURPLE = '#a78bfa';
 export const SHORTS: Short[] = [
   {
     slug: 'saved-but-the-old-address-is-back',
+    question: 'Ever seen your own change disappear after saving?',
     // Open on the payoff: the old address after "Saved ✓".
     open: clip('The old address is back'),
     start: from('The customer saves the new address'),
@@ -53,6 +54,7 @@ export const SHORTS: Short[] = [
   },
   {
     slug: 'sync-vs-async-replication',
+    question: 'Sync or async: which would you pick for payments?',
     // Open on the crash: a confirmed save that never reached a replica.
     open: clip('If the primary crashes before'),
     start: from('With asynchronous replication, the primary confirms'),
@@ -74,6 +76,7 @@ export const SHORTS: Short[] = [
   },
   {
     slug: 'split-brain-two-primaries',
+    question: 'Have you ever ended up with two primaries?',
     // Open on two primaries holding two different addresses for one order.
     open: clip('Now two servers accept writes'),
     start: from('The old primary comes back online'),
@@ -95,6 +98,7 @@ export const SHORTS: Short[] = [
   },
   {
     slug: 'read-replicas-are-read-only',
+    question: 'Do your reads go to replicas, or does the primary take everything?',
     // Open on the bounce: an update sent to a replica fails ("✗ read-only").
     open: clip('In PostgreSQL, those connections are strictly read-only'),
     start: from('Replicas are read-only'),

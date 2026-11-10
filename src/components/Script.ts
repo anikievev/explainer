@@ -46,6 +46,8 @@ export interface Short {
   title: string;
   description: string;
   hashtags: string[];
+  /** Comment prompt for the Instagram caption, specific to this clip. */
+  question?: string;
   /** Optional step pill under the title (list progress, HIT → MISS). */
   beats?: Beat[];
   /** Video time (s) of the cover frame, used as the Short's thumbnail. Default: 2 s into the first beat, else 4 s in. */

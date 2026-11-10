@@ -212,6 +212,7 @@ Use these repeatable formats:
 - **Hashtags:** `#systemdesign` first, then the topic. Never `#cloudarchitecture`, and only tags that match the Short.
 - **Link back:** set each Short's "Related video" to its episode and pin a comment with the link; Shorts sent almost no viewers to the long videos.
 - **Sound accents (test, Nov 2026):** Shorts can mix quiet effects from `src/assets/sfx/` (`npm run sfx` generates them; set `beatSounds` and `sfx` in `shorts.ts`). Sharding Short #1 is the first with sound; compare its "Stayed to watch" with the silent ones before adding sound everywhere.
+- **Instagram Reels:** `npm run shorts -- --episode <id> --instagram` cuts the same clips into `output/renders/shorts/<id>/instagram/` with text moved clear of Instagram's top bar and right-side buttons, plus `REELS.md` captions (a save line, the Short's own `question` for comments, "Full video: link in bio", 3–5 hashtags). `--notes-only` rewrites the captions without re-cutting. Upload these files, never YouTube downloads (watermarked reposts get less reach).
 - **After upload, check "Stayed to watch"** (viewed vs. swiped away) for each Short, and note it in the episode's `PLAN.md` results.
 
 ### After upload

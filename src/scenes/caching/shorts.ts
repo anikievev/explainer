@@ -30,6 +30,7 @@ const PURPLE = '#a78bfa';
 export const SHORTS: Short[] = [
   {
     slug: 'cache-hit-vs-miss',
+    question: 'What do you cache in your app?',
     // Open on the problem: the database drowning in identical questions.
     open: clip('During a sale', 'What if we just remembered'),
     start: from('A server checks the cache first'),
@@ -51,6 +52,7 @@ export const SHORTS: Short[] = [
   },
   {
     slug: 'your-cache-shows-the-wrong-price',
+    question: 'How do you keep cached data fresh: a TTL, or delete on write?',
     // Open on the payoff: the shopper sees the old price.
     open: clip('So shoppers see the wrong price'),
     start: from("But there's a catch"),
@@ -71,6 +73,7 @@ export const SHORTS: Short[] = [
   },
   {
     slug: 'redis-doesnt-evict-by-default',
+    question: 'Which maxmemory-policy does your Redis run with?',
     // Start on the surprise itself; the full memory meter and OOM badge give the context.
     start: from('By default, Redis evicts nothing'),
     end: to("Redis doesn't track that exactly"),
@@ -89,6 +92,7 @@ export const SHORTS: Short[] = [
   },
   {
     slug: 'one-key-expired-cache-stampede',
+    question: 'Ever had one expired key flood your database?',
     // Open on the stampede, then show how it happened.
     open: clip('In that moment, every request misses'),
     start: from('Product 42 is the hottest key'),

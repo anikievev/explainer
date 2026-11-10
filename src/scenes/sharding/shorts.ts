@@ -31,6 +31,7 @@ const PURPLE = '#a78bfa';
 export const SHORTS: Short[] = [
   {
     slug: 'add-one-server-move-80-percent',
+    question: 'Logical shards or consistent hashing: which would you use?',
     // Open on the payoff: 800 of 1,000 keys flying to new shards.
     open: clip('Here are a thousand keys'),
     start: from("Sooner or later, four shards aren't enough"),
@@ -60,6 +61,7 @@ export const SHORTS: Short[] = [
   },
   {
     slug: 'never-shard-by-timestamp',
+    question: 'What would you pick as the shard key for your app?',
     // Open on the problem: one red shard taking every write.
     open: clip("But every new order has today's date"),
     start: from('First try: the order date'),
@@ -80,6 +82,7 @@ export const SHORTS: Short[] = [
   },
   {
     slug: 'sharding-vs-replication',
+    question: 'Do you need sharding yet, or are replicas enough?',
     // Open on the comparison itself.
     open: clip('Compare that with replicas'),
     start: from('So the writes split up too'),
@@ -100,6 +103,7 @@ export const SHORTS: Short[] = [
   },
   {
     slug: 'why-notion-picked-480-shards',
+    question: 'How many shards would you start with?',
     // Open on the surprising number.
     open: clip('They picked 480 because'),
     start: from("That's 80 percent of the data on the move"),
